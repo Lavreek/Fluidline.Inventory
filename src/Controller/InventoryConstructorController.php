@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Form\InventoryInputType;
+use App\Service\EntityPuller;
 use App\Service\FileReader;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -36,7 +37,7 @@ class InventoryConstructorController extends AbstractController
     }
 
     #[Route('/inventory/constructor/create', name: 'app_inventory_constructor_create')]
-    public function createInventory(Request $request, SluggerInterface $slugger, ManagerRegistry $manager): JsonResponse
+    public function createInventory(Request $request, ManagerRegistry $registry): JsonResponse
     {
         $inventory_form = $this->createForm(InventoryInputType::class);
         $inventory_form->handleRequest($request);
@@ -46,6 +47,9 @@ class InventoryConstructorController extends AbstractController
 
             /** @var UploadedFile $inventory_file */
             $inventory_file = $form_data['inventory_file'];
+
+            /** @var string $inventory_type */
+            $inventory_type = $form_data['inventory_type'];
 
             $filename = $inventory_file->getClientOriginalName();
 
@@ -59,14 +63,14 @@ class InventoryConstructorController extends AbstractController
                 return new JsonResponse(['error' => "Ошибка при загрузке файла.", 'exception' => $e->getMessage()]);
             }
 
-            $file_reader = new FileReader($manager);
+            $products = (new FileReader())->executeCreate($this->getInputDirectory() . $filename);
 
-            $products = $file_reader->executeCreate($this->getInputDirectory()  . $filename);
+            $puller = (new EntityPuller($registry))->pullEntities($inventory_type, $products);
 
-            dd($products[0]);
+            return new JsonResponse(['Сущности были успешно добавлены']);
         }
 
-        return new JsonResponse('here');
+        return new JsonResponse(['Форма не прошла валидацию в системе']);
     }
 
     private function getInputDirectory()

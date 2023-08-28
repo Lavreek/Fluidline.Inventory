@@ -14,12 +14,16 @@ class InventoryParamhouse
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'parameters')]
-    private ?Inventory $code_id = null;
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    private ?Inventory $code = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    private ?string $value = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
     public function getId(): ?int
@@ -29,12 +33,12 @@ class InventoryParamhouse
 
     public function getCodeId(): ?Inventory
     {
-        return $this->code_id;
+        return $this->code;
     }
 
-    public function setCodeId(?Inventory $code_id): static
+    public function setCodeId(?Inventory $code): static
     {
-        $this->code_id = $code_id;
+        $this->code = $code;
 
         return $this;
     }
@@ -59,6 +63,18 @@ class InventoryParamhouse
     public function setDescription(string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getValue(): ?string
+    {
+        return $this->value;
+    }
+
+    public function setValue(string $value): static
+    {
+        $this->value = $value;
 
         return $this;
     }

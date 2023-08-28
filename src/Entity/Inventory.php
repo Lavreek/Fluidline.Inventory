@@ -6,6 +6,7 @@ use App\Repository\InventoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use phpDocumentor\Reflection\Types\True_;
 
 #[ORM\Entity(repositoryClass: InventoryRepository::class)]
 class Inventory
@@ -21,7 +22,7 @@ class Inventory
     #[ORM\Column(length: 255)]
     private ?string $type = null;
 
-    #[ORM\OneToMany(mappedBy: 'code_id', targetEntity: InventoryParamhouse::class)]
+    #[ORM\OneToMany(mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist'], orphanRemoval: true)]
     private Collection $parameters;
 
     public function __construct()
