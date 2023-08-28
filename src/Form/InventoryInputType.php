@@ -25,14 +25,14 @@ class InventoryInputType extends AbstractType
             ->add('inventory_file', FileType::class, [
                 'label' => 'Файл характеристик (CSV файл)',
                 'constraints' => [
-                    new File([
-                        'maxSize' => '512k',
-                        'mimeTypes' => [
-                            'text/csv',
-                            'text/plain'
-                        ],
-                        'mimeTypesMessage' => 'Файл не подходит для загрузки',
-                    ])
+//                    new File([
+//                        'maxSize' => '512k',
+//                        'mimeTypes' => [
+//                            'text/csv',
+//                            'text/plain'
+//                        ],
+//                        'mimeTypesMessage' => 'Файл не подходит для загрузки',
+//                    ])
                 ],
             ])
             ->add('submit', SubmitType::class, [

@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Form\InventoryInputType;
+use App\Service\FileReader;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -14,7 +16,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 
 class InventoryConstructorController extends AbstractController
 {
-    private $inputDirectory;
+    private string $inputDirectory;
 
     public function __construct($inputDirectory)
     {
@@ -34,7 +36,7 @@ class InventoryConstructorController extends AbstractController
     }
 
     #[Route('/inventory/constructor/create', name: 'app_inventory_constructor_create')]
-    public function createInventory(Request $request, SluggerInterface $slugger): JsonResponse
+    public function createInventory(Request $request, SluggerInterface $slugger, ManagerRegistry $manager): JsonResponse
     {
         $inventory_form = $this->createForm(InventoryInputType::class);
         $inventory_form->handleRequest($request);
@@ -45,15 +47,23 @@ class InventoryConstructorController extends AbstractController
             /** @var UploadedFile $inventory_file */
             $inventory_file = $form_data['inventory_file'];
 
-            $safe_filename = $slugger->slug($inventory_file->getClientOriginalName());
-            $filename = $safe_filename . "." . $inventory_file->guessExtension();
+            $filename = $inventory_file->getClientOriginalName();
 
             try {
-                $inventory_file->move($this->getInputDirectory(), $filename);
+                file_put_contents(
+                    $this->getInputDirectory() . $filename,
+                    $inventory_file->getContent()
+                );
 
             } catch (FileException $e) {
-                return new JsonResponse('Ошибка при загрузке файла.');
+                return new JsonResponse(['error' => "Ошибка при загрузке файла.", 'exception' => $e->getMessage()]);
             }
+
+            $file_reader = new FileReader($manager);
+
+            $products = $file_reader->executeCreate($this->getInputDirectory()  . $filename);
+
+            dd($products[0]);
         }
 
         return new JsonResponse('here');
