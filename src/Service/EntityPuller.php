@@ -4,67 +4,59 @@ namespace App\Service;
 
 use App\Entity\Inventory;
 use App\Entity\InventoryParamhouse;
-use Doctrine\Persistence\ManagerRegistry;
-use Doctrine\Persistence\ObjectManager;
+use Doctrine\ORM\EntityManager;
 
 class EntityPuller
 {
-    private ManagerRegistry $registry;
+    private string $memory = "";
 
-    public function __construct($registry)
+    private function setMemory($value)
     {
-        $this->registry = $registry;
+        $this->memory .= date("Y-m-d H:i:s") . " - " . $value . " \n";
     }
 
-    public function pullEntities(string $type, array $entities)
+    private function persistEntities($entity, $serial, $type) : Inventory
     {
-        $manager = $this->getManager();
+        $inventory = new Inventory();
 
-        $inventoryRepository = $manager->getRepository(Inventory::class);
+        $inventory->setType($type);
+        $inventory->setSerial($serial);
+        $inventory->setCode($entity['code']);
+        $inventory->setCreated(new \DateTime(date('Y-m-d H:i:s')));
 
-        $inventories = [];
+        if (!empty($entity['parameters'])) {
+            foreach ($entity['parameters'] as $parameter) {
+                $paramhouse = new InventoryParamhouse();
 
-        foreach ($entities as $entity) {
-            $inventory = $inventoryRepository->findBy(['type' => $type, 'code' => $entity['code']]);
+                $paramhouse->setName($parameter['name']);
+                $paramhouse->setValue($parameter['value']);
 
-            if (empty($inventory)) {
-                $inventory = new Inventory();
-
-                $inventory->setType($type);
-                $inventory->setCode($entity['code']);
-
-                if (!empty($entity['parameters'])) {
-                    foreach ($entity['parameters'] as $parameter) {
-                        $paramhouse = new InventoryParamhouse();
-
-                        $paramhouse->setName($parameter['name']);
-                        $paramhouse->setValue($parameter['value']);
-
-                        if (isset($parameter['description'])) {
-                            $paramhouse->setDescription($parameter['description']);
-                        }
-
-                        $inventory->addParameters($paramhouse);
-                    }
+                if (isset($parameter['description'])) {
+                    $paramhouse->setDescription($parameter['description']);
                 }
 
-                $inventories[] = $inventory;
+                $inventory->addParameters($paramhouse);
             }
         }
 
-        foreach ($inventories as $inventory) {
-            $manager->persist($inventory);
+        return $inventory;
+    }
+
+    private function logMemoryData()
+    {
+        file_put_contents(__DIR__ . "/memory.log", $this->memory);
+    }
+
+    public function pullEntities(string $type, string $serial, array &$entities)
+    {
+        register_shutdown_function([$this, 'logMemoryData']);
+
+        $this->setMemory('memory usage: start : ' .memory_get_usage());
+
+        for ($i = 0; $i < count($entities); $i++) {
+            $entities[$i] = $this->persistEntities($entities[$i], $serial, $type);
         }
-        $manager->flush();
-    }
 
-    private function getRegistry() : ManagerRegistry
-    {
-        return $this->registry;
-    }
-
-    private function getManager() : ObjectManager
-    {
-        return $this->getRegistry()->getManager();
+        $this->setMemory('memory usage: end : ' .memory_get_usage());
     }
 }

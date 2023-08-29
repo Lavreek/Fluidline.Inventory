@@ -21,6 +21,22 @@ class InventoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Inventory::class);
     }
 
+    /**
+     * @return Inventory[] Returns an array of Inventory objects
+     */
+    public function removeBySerialType(string $serial, string $type) : void
+    {
+        $this->createQueryBuilder('i')
+            ->delete(Inventory::class, 'i')
+            ->where('i.serial = :s')
+            ->setParameter('s', $serial)
+            ->andWhere('i.type = :t')
+            ->setParameter('t', $type)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return Inventory[] Returns an array of Inventory objects
 //     */

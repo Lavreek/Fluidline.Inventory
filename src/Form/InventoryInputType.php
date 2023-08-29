@@ -22,6 +22,12 @@ class InventoryInputType extends AbstractType
                     'placeholder' => 'например, Фитинги',
                 ]
             ])
+            ->add('inventory_serial', TextType::class, [
+                'label' => 'Серия',
+                'attr' => [
+                    'placeholder' => 'например, CUA'
+                ]
+            ])
             ->add('inventory_file', FileType::class, [
                 'label' => 'Файл характеристик (CSV файл)',
                 'constraints' => [

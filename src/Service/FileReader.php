@@ -2,6 +2,10 @@
 
 namespace App\Service;
 
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
 class FileReader
 {
     private array $products = [];
@@ -9,6 +13,46 @@ class FileReader
     private array $parameters = [];
 
     private array $naming = [];
+
+    private string $readDirectory;
+
+    private UploadedFile $file;
+
+    public function setReadDirectory($readDirectory) : void
+    {
+        $this->readDirectory = $readDirectory;
+    }
+
+    public function setFile($file) : void
+    {
+        $this->file = $file;
+    }
+
+    public function getFile() : UploadedFile
+    {
+        return $this->file;
+    }
+
+    public function getReadDirectory() : string
+    {
+        return $this->readDirectory;
+    }
+
+    public function saveFile() : null|JsonResponse
+    {
+        $file = $this->file;
+
+        try {
+            file_put_contents(
+                $this->getReadDirectory() . $file->getClientOriginalName(),
+                $file->getContent()
+            );
+
+            return null;
+        } catch (FileException $e) {
+            return new JsonResponse(['error' => "Ошибка при загрузке файла.", 'exception' => $e->getMessage()]);
+        }
+    }
 
     private function getParameters($values) : void
     {
@@ -23,7 +67,8 @@ class FileReader
                         $productsInterim[] = $product;
 
                         if ($current[$i] !== '-') {
-                            $productsInterim[count($productsInterim) - 1]['code'] = $productsInterim[count($productsInterim) - 1]['code'] . '-' . $current[$i];
+                            $productsInterim[count($productsInterim) - 1]['code'] =
+                                $productsInterim[count($productsInterim) - 1]['code'] . '-' . $current[$i];
                         }
 
                         if (isset($this->parameters[$key])) {
@@ -123,9 +168,11 @@ class FileReader
         return $values;
     }
 
-    public function executeCreate($filepath) : array
+    public function executeCreate() : array
     {
-        $file = fopen($filepath, 'r');
+        $directory = $this->getReadDirectory();
+
+        $file = fopen($directory . $this->getFile()->getClientOriginalName(), 'r');
 
         $this->getParameters(
             $this->getCSVValues($file)

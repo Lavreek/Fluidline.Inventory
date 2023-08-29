@@ -5,6 +5,10 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     inventory_input_directory: '%kernel.project_dir%/public/uploads/input/'
+    inventory_queue_directory: '%kernel.project_dir%/public/uploads/queue/'
+    inventory_serialize_directory: '%kernel.project_dir%/public/serialize/'
+    inventory_memory_usage: '%kernel.project_dir%/var/log/memory-usage.log'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -19,6 +23,7 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
     App\Controller\InventoryConstructorController:
         arguments:
             $inputDirectory: '%inventory_input_directory%'

@@ -13,7 +13,7 @@ class InventoryParamhouse
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'parameters')]
+    #[ORM\ManyToOne(targetEntity: Inventory::class, inversedBy: 'parameters')]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?Inventory $code = null;
 
