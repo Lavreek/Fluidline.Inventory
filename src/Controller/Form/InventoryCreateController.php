@@ -24,7 +24,7 @@ class InventoryCreateController extends AbstractController
         $this->inputDirectory = $inputDirectory;
     }
 
-    #[Route('/inventory/constructor/create', name: 'app_inventory_constructor_create')]
+    #[Route('/constructor/create', name: 'app_constructor_create')]
     public function createInventory(Request $request, EntityManagerInterface $manager) : JsonResponse|RedirectResponse
     {
         ini_set('memory_limit', '512M');
@@ -60,18 +60,20 @@ class InventoryCreateController extends AbstractController
                 $inventoryRepository = $manager->getRepository(Inventory::class);
                 $inventoryRepository->removeBySerialType($inventory_serial, $inventory_type);
 
-                $rows = 0;
+                $chunkCount = 0;
                 foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {
                     $this->serializeProducts(
                         $chunk,
                         $inventory_serial,
                         "chunk-". $chunkIndex ."-". $inventory_file->getClientOriginalName()
                     );
+
+                    $chunkCount++;
                 }
 
                 $manager->commit();
 
-                register_shutdown_function([$this, 'inventoryRemains'], $rows);
+                register_shutdown_function([$this, 'inventoryRemains'], $chunkCount);
 
             } catch (\Exception | \Throwable $exception) {
                 $manager->rollback();
@@ -101,14 +103,14 @@ class InventoryCreateController extends AbstractController
         file_put_contents($serialSerializePath . $filename . ".serial", serialize($products));
     }
 
-    private function inventoryRemains($rows)
+    private function inventoryRemains($count)
     {
         $logFile = $this->getParameter('inventory_memory_usage');
 
         file_put_contents($logFile,
-            "\n Inventory Remains:
-            \n\t Memory at end: memory_get_usage(): ". memory_get_usage() ." \n
-            \n\t Rows added: $rows\n"
+            "\n Inventory Remains:" .
+            "\n\t Memory at end: ". memory_get_usage() .
+            "\n\t Chunks added: $count\n"
         );
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Command;
 
-use App_KernelDevDebugContainer;
+use App\Entity\Inventory;
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\ORM\EntityManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -14,17 +13,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'persistInventory',
+    name: 'updateInventory',
     description: 'Add a short description for your command',
 )]
-
-class PersistInventoryCommand extends Command
+class UpdateInventoryCommand extends Command
 {
-    public function __construct(string $name = null)
-    {
-        parent::__construct($name);
-    }
-
     protected function configure(): void
     {
         $this
@@ -43,7 +36,7 @@ class PersistInventoryCommand extends Command
         $container = $this->getApplication()->getKernel()->getContainer();
 
         /** @var string $serializePath | Путь к сериализованным файлам */
-        $serializePath = $container->getParameter('inventory_serialize_directory');
+        $serializePath = $container->getParameter('inventory_serialize_price_directory');
 
         /** @var string $cronLogPath | Путь к файлу логирования данной задачи */
         $cronLogPath = $container->getParameter('inventory_cron_execute');
@@ -53,14 +46,13 @@ class PersistInventoryCommand extends Command
 
         $entityManager = $doctrineRegistry->getManager();
 
-        $serializeSerials = array_diff(scandir($serializePath), ['..', '.', '.gitignore']);
 
-        if (count($serializeSerials) > 0) {
-            $serial = array_shift($serializeSerials);
 
-            $serializeSerialsPath = $serializePath . $serial . "/";
-            $filesInThere = array_diff(scandir($serializeSerialsPath), ['..', '.']);
-            $filename = $serializeSerialsPath . array_shift($filesInThere);
+        $serializeChunks = array_diff(scandir($serializePath), ['..', '.', '.gitignore']);
+
+        if (count($serializeChunks) > 0) {
+            $chunk = array_shift($serializeChunks);
+            $filename = $serializePath . $chunk;
 
             $f = fopen($filename, 'r');
 
@@ -68,18 +60,22 @@ class PersistInventoryCommand extends Command
                 $serializeData = unserialize(stream_get_contents($f));
 
                 for ($i = 0; $i < count($serializeData); $i++) {
-                    $entityManager->persist($serializeData[$i]);
+                    $code = $entityManager->getRepository(Inventory::class)->findOneBy(['name' => $serializeData[$i]['code']]);
+
+                    if (!$code) {
+//                        $code =
+                    }
+
+                    dd($serializeData[$i]);
+
+//                    $entityManager->persist($serializeData[$i]);
                 }
-                $entityManager->flush();
-                $entityManager->clear();
+//                $entityManager->flush();
+//                $entityManager->clear();
 
                 fclose($f);
 
-                unlink($filename);
-
-                if (count($filesInThere) < 1) {
-                    rmdir($serializeSerialsPath);
-                }
+                unlink($chunk);
             }
 
             if ($would_block) {
@@ -89,7 +85,7 @@ class PersistInventoryCommand extends Command
             file_put_contents(
                 $cronLogPath,
                 "\n ". date('d-m-Y H:i:s') .
-                "\n Serial: $serial".
+                "\n Update: ".
                 "\n\tStart with : $memoryUsage. Rise in: ". memory_get_usage() - $memoryUsage .
                 ". Memory peak: ". memory_get_peak_usage() .".\n",
                 FILE_APPEND
@@ -99,7 +95,7 @@ class PersistInventoryCommand extends Command
         return Command::SUCCESS;
     }
 
-    protected function executeBase(InputInterface $input, OutputInterface $output) : int
+    protected function executeBase(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $arg1 = $input->getArgument('arg1');

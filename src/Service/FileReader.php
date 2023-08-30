@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\InventoryPricehouse;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -113,13 +114,13 @@ class FileReader
         }
     }
 
-    private function getCSVValues($file) : array
+    private function getCSVValues($filepath) : array
     {
         $row = 0;
 
         $header = $position = $values = [];
 
-        while ($data = fgetcsv($file, separator: ';')) {
+        while ($data = fgetcsv($filepath, separator: ';')) {
             if (!preg_match('#\##', $data[0]) and $row === 0) {
                 throw new \Exception("\n\n\tFirst column must be empty with heading \"#\"\n\n");
             }
@@ -179,5 +180,55 @@ class FileReader
         );
 
         return $this->products;
+    }
+
+    private function replaceNBSP($content) : string
+    {
+        return str_replace(['﻿'], '', $content);
+    }
+
+    public function getCSVPrices($content) : array
+    {
+        $content = $this->replaceNBSP($content);
+
+        $lines = explode("\n", $content);
+
+        $entities = [];
+
+        foreach ($lines as $line) {
+            $data = explode(';', $line);
+
+            if (!empty($data)) {
+                $parameters = [];
+
+                if (isset($data[0])) {
+                    $parameters['code'] = $data[0];
+                } else {
+                    continue;
+                }
+
+                if (isset($data[1])) {
+                    $parameters['count'] = $data[1];
+                } else {
+                    $parameters['count'] = 0;
+                }
+
+                if (isset($data[2])) {
+                    $parameters['price'] = $data[2];
+                } else {
+                    $parameters['price'] = 0;
+                }
+
+                if (isset($data[3])) {
+                    $parameters['currency'] = $data[3];
+                } else {
+                    $parameters['currency'] = '$';
+                }
+
+                $entities[] = $parameters;
+            }
+        }
+
+        return $entities;
     }
 }
