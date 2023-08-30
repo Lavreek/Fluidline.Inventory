@@ -24,7 +24,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Controller\InventoryConstructorController:
+    App\Controller\Form\InventoryCreateController:
         arguments:
             $inputDirectory: '%inventory_input_directory%'
 

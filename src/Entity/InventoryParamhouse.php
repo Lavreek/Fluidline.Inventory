@@ -6,6 +6,8 @@ use App\Repository\InventoryParamhouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryParamhouseRepository::class)]
+#[ORM\Index(name: 'idx_name', columns: ['name'])]
+#[ORM\Index(name: 'idx_value', columns: ['value'])]
 class InventoryParamhouse
 {
     #[ORM\Id]
