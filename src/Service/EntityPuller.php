@@ -35,7 +35,7 @@ class EntityPuller
                     $paramhouse->setDescription($parameter['description']);
                 }
 
-                $inventory->addParameters($paramhouse);
+                $inventory->addParameter($paramhouse);
             }
         }
 

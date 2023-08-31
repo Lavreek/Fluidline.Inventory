@@ -29,13 +29,14 @@ class Inventory
     #[ORM\Column(length: 255)]
     private ?string $code = null;
 
-    #[ORM\OneToMany(
-        mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'], orphanRemoval: true
-    )]
-    private Collection $parameters;
+    #[ORM\OneToOne(inversedBy: 'code', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private ?InventoryPricehouse $price = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $created = null;
+
+    #[ORM\OneToMany(mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'], orphanRemoval: true) ]
+    private Collection $parameters;
 
     public function __construct()
     {
@@ -71,36 +72,6 @@ class Inventory
         return $this;
     }
 
-    /**
-     * @return Collection<int, InventoryParamhouse>
-     */
-    public function getParameters(): Collection
-    {
-        return $this->parameters;
-    }
-
-    public function addParameters(InventoryParamhouse $parameters): static
-    {
-        if (!$this->parameters->contains($parameters)) {
-            $this->parameters->add($parameters);
-            $parameters->setCodeId($this);
-        }
-
-        return $this;
-    }
-
-    public function removeParameters(InventoryParamhouse $parameters): static
-    {
-        if ($this->parameters->removeElement($parameters)) {
-            // set the owning side to null (unless already changed)
-            if ($parameters->getCodeId() === $this) {
-                $parameters->setCodeId(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getSerial(): ?string
     {
         return $this->serial;
@@ -121,6 +92,48 @@ class Inventory
     public function setCreated(\DateTimeInterface $created): static
     {
         $this->created = $created;
+
+        return $this;
+    }
+
+    public function getPrice(): ?InventoryPricehouse
+    {
+        return $this->price;
+    }
+
+    public function setPrice(?InventoryPricehouse $price): static
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, InventoryParamhouse>
+     */
+    public function getParameters(): Collection
+    {
+        return $this->parameters;
+    }
+
+    public function addParameter(InventoryParamhouse $parameter): static
+    {
+        if (!$this->parameters->contains($parameter)) {
+            $this->parameters->add($parameter);
+            $parameter->setCode($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParameter(InventoryParamhouse $parameter): static
+    {
+        if ($this->parameters->removeElement($parameter)) {
+            // set the owning side to null (unless already changed)
+            if ($parameter->getCode() === $this) {
+                $parameter->setCode(null);
+            }
+        }
 
         return $this;
     }

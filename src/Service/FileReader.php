@@ -207,22 +207,26 @@ class FileReader
                     continue;
                 }
 
+                $parameters['count'] = 0;
+                $parameters['price'] = 0;
+                $parameters['currency'] = '$';
+
                 if (isset($data[1])) {
-                    $parameters['count'] = $data[1];
-                } else {
-                    $parameters['count'] = 0;
+                    if (!empty($data[1])) {
+                        $parameters['count'] = $data[1];
+                    }
                 }
 
                 if (isset($data[2])) {
-                    $parameters['price'] = $data[2];
-                } else {
-                    $parameters['price'] = 0;
+                    if (!empty($data[2])) {
+                        $parameters['price'] = $data[2];
+                    }
                 }
 
                 if (isset($data[3])) {
-                    $parameters['currency'] = $data[3];
-                } else {
-                    $parameters['currency'] = '$';
+                    if (!empty($data[3])) {
+                        $parameters['currency'] = $this->getCurrency($data[3]);
+                    }
                 }
 
                 $entities[] = $parameters;
@@ -230,5 +234,26 @@ class FileReader
         }
 
         return $entities;
+    }
+
+    private function getCurrency($tag) : string
+    {
+        switch ($tag) {
+            case 'RUB' : {
+                return "₽";
+            }
+
+            case 'EUR' : {
+                return "€";
+            }
+
+            case 'GBP' : {
+                return "£";
+            }
+
+            default : {
+                return "$";
+            }
+        }
     }
 }

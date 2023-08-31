@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\InventoryParamhouseRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryParamhouseRepository::class)]
@@ -15,10 +17,6 @@ class InventoryParamhouse
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Inventory::class, inversedBy: 'parameters')]
-    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    private ?Inventory $code = null;
-
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
@@ -28,21 +26,17 @@ class InventoryParamhouse
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
+    #[ORM\ManyToOne(inversedBy: 'parameters')]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    private ?Inventory $code = null;
+
+//    #[ORM\ManyToOne(inversedBy: 'parameters')]
+//    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+//    private ?Inventory $code = null;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getCodeId(): ?Inventory
-    {
-        return $this->code;
-    }
-
-    public function setCodeId(?Inventory $code): static
-    {
-        $this->code = $code;
-
-        return $this;
     }
 
     public function getName(): ?string
@@ -77,6 +71,18 @@ class InventoryParamhouse
     public function setValue(string $value): static
     {
         $this->value = $value;
+
+        return $this;
+    }
+
+    public function getCode(): ?Inventory
+    {
+        return $this->code;
+    }
+
+    public function setCode(?Inventory $code): static
+    {
+        $this->code = $code;
 
         return $this;
     }

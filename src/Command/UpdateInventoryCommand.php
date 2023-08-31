@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Inventory;
+use App\Entity\InventoryPricehouse;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -46,8 +47,6 @@ class UpdateInventoryCommand extends Command
 
         $entityManager = $doctrineRegistry->getManager();
 
-
-
         $serializeChunks = array_diff(scandir($serializePath), ['..', '.', '.gitignore']);
 
         if (count($serializeChunks) > 0) {
@@ -60,22 +59,32 @@ class UpdateInventoryCommand extends Command
                 $serializeData = unserialize(stream_get_contents($f));
 
                 for ($i = 0; $i < count($serializeData); $i++) {
-                    $code = $entityManager->getRepository(Inventory::class)->findOneBy(['name' => $serializeData[$i]['code']]);
+                    /** @var Inventory $inventory */
+                    $inventory = $entityManager->getRepository(Inventory::class)->findOneBy(['code' => $serializeData[$i]['code']]);
 
-                    if (!$code) {
-//                        $code =
+                    if ($inventory) {
+                        $data = $serializeData[$i];
+                        $pricehouse = new InventoryPricehouse();
+
+                        $pricehouse->setCode($inventory);
+                        $pricehouse->setValue(
+                            str_replace(',', '.', $data['price'])
+                        );
+                        $pricehouse->setWarehouse($data['count']);
+                        $pricehouse->setCurrency($data['currency']);
+
+                        $inventory->setPrice($pricehouse);
+
+                        $entityManager->persist($inventory);
                     }
-
-                    dd($serializeData[$i]);
-
-//                    $entityManager->persist($serializeData[$i]);
                 }
-//                $entityManager->flush();
-//                $entityManager->clear();
+
+                $entityManager->flush();
+                $entityManager->clear();
 
                 fclose($f);
 
-                unlink($chunk);
+                unlink($filename);
             }
 
             if ($would_block) {

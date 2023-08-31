@@ -16,7 +16,7 @@ use Symfony\Component\Serializer\Serializer;
 
 class InventoryGetterController extends AbstractController
 {
-    #[Route('/get/{serial}', name: 'app_get_serial')]
+    #[Route('/get/{serial}', name: 'app_get_serial', methods: ['POST'])]
     public function getSerial($serial, ManagerRegistry $registry): JsonResponse
     {
         $limit = 100;
@@ -28,14 +28,16 @@ class InventoryGetterController extends AbstractController
         $inventoryRepository = $manager->getRepository(Inventory::class);
 
         /** @var Inventory[] $inventory */
-        $inventory = $inventoryRepository->findBy(['serial' => $serial], $limit);
+        $inventory = $inventoryRepository->findBy(['serial' => $serial], limit: $limit);
 
         $encoders = [new JsonEncoder()];
 
         $defaultContext = [
-            AbstractNormalizer::CIRCULAR_REFERENCE_HANDLER => function (object $object, string $format, array $context): string {
-                return $object->getCode();
-            },
+            AbstractNormalizer::CIRCULAR_REFERENCE_HANDLER
+                => function (object $object, string $format, array $context) : string
+                {
+                    return $object->getCode();
+                },
         ];
 
         $normalizers = [new ObjectNormalizer(defaultContext: $defaultContext)];
@@ -47,7 +49,7 @@ class InventoryGetterController extends AbstractController
         foreach ($inventory as $item) {
             $object = json_decode($serializer->serialize($item, 'json'), true);
 
-            foreach ($object['parameters'] as $parameter) {
+            foreach ($object['parameters'] as $parameterIndex => $parameter) {
                 if (!isset($parametersArray[$parameter['name']])) {
                     $parametersArray[$parameter['name']] = ['values' => []];
                 }
@@ -59,9 +61,18 @@ class InventoryGetterController extends AbstractController
                 if (!in_array($parameter['value'], $parametersArray[$parameter['name']]['values'])) {
                     $parametersArray[$parameter['name']]['values'][] = $parameter['value'];
                 }
+
+                unset(
+                    $object['parameters'][$parameterIndex]['id'],
+                    $object['parameters'][$parameterIndex]['code'],
+                );
             }
 
-            unset($object['created']);
+            unset(
+                $object['price']['id'],
+                $object['price']['code'],
+                $object['created'],
+            );
 
             $serializerArray[] = $object;
         }
