@@ -54,12 +54,11 @@ class InventoryGetterController extends AbstractController
                     $parametersArray[$parameter['name']] = ['values' => []];
                 }
 
-                if (!isset($parametersArray[$parameter['name']]['description'])) {
-                    $parametersArray[$parameter['name']]['description'] = $parameter['description'];
-                }
-
                 if (!in_array($parameter['value'], $parametersArray[$parameter['name']]['values'])) {
                     $parametersArray[$parameter['name']]['values'][] = $parameter['value'];
+                    if (isset($parameter['description'])) {
+                        $parametersArray[$parameter['name']]['description'][] = $parameter['description'];
+                    }
                 }
 
                 unset(
