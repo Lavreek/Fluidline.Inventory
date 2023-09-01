@@ -120,7 +120,7 @@ class FileReader
                         foreach ($parameters[$key] as $groupKey => $groupValue) {
                             $group = [
                                 'name' => $groupKey,
-                                'value' => trim($parameters[$key][$groupKey][$i], "\""),
+                                'value' => $parameters[$key][$groupKey][$i],
                             ];
 
                             if (isset($description[$groupKey])) {
@@ -155,6 +155,9 @@ class FileReader
                 $header = $data;
 
                 foreach ($data as $columnKey => $columnData) {
+                    $columnKey = trim($columnKey, "\"");
+                    $columnData = trim($columnData, "\"");
+
                     if (preg_match('#Параметр:(.*)#u', $columnData, $match)) {
                         [$parameter, $name] = explode(':', $match[1]);
                         $this->parameters[$parameter][$name] = [];
@@ -171,6 +174,9 @@ class FileReader
             } else {
                 foreach ($data as $columnKey => $columnData) {
                     if (!empty($columnData)) {
+                        $columnKey = trim($columnKey, "\"");
+                        $columnData = trim($columnData, "\"");
+
                         if (in_array($columnKey, $position['values'])) {
                             $values[$header[$columnKey]][] = $columnData;
 
