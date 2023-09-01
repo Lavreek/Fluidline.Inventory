@@ -16,7 +16,8 @@ class InventoryConstructorController extends AbstractController
     {
         $remoteAddress = $request->server->get('REMOTE_ADDR');
 
-        if (!in_array($remoteAddress, ['77.50.146.14', '127.0.0.1'])) {
+        //ToDo: Make auth.
+        if (!in_array($remoteAddress, ['77.50.146.14', '185.180.124.14', '127.0.0.1'])) {
             return new Response();
         }
 
@@ -33,7 +34,8 @@ class InventoryConstructorController extends AbstractController
     {
         $remoteAddress = $request->server->get('REMOTE_ADDR');
 
-        if (!in_array($remoteAddress, ['77.50.146.14', '127.0.0.1'])) {
+        //ToDo: Make auth.
+        if (!in_array($remoteAddress, ['77.50.146.14', '185.180.124.14', '127.0.0.1'])) {
             return new Response();
         }
 
