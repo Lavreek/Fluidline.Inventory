@@ -23,7 +23,7 @@ class InventoryPricehouse
     #[ORM\Column]
     private ?int $warehouse = null;
 
-    #[ORM\OneToOne(mappedBy: 'price', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'price', cascade: ['persist'])]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?Inventory $code = null;
 

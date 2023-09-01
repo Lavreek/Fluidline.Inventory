@@ -90,7 +90,7 @@ class InventoryCreateController extends AbstractController
         return $this->inputDirectory;
     }
 
-    private function serializeProducts($products, $serial, $filename)
+    private function serializeProducts($products, $serial, $filename) : void
     {
         $serializePath = $this->getParameter('inventory_serialize_directory');
 

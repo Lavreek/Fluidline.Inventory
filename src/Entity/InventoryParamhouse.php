@@ -30,10 +30,6 @@ class InventoryParamhouse
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?Inventory $code = null;
 
-//    #[ORM\ManyToOne(inversedBy: 'parameters')]
-//    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-//    private ?Inventory $code = null;
-
     public function getId(): ?int
     {
         return $this->id;

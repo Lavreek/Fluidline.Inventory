@@ -29,13 +29,17 @@ class Inventory
     #[ORM\Column(length: 255)]
     private ?string $code = null;
 
-    #[ORM\OneToOne(inversedBy: 'code', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToOne(
+        mappedBy: 'code', targetEntity: InventoryPricehouse::class, cascade: ['persist', 'remove'], orphanRemoval: true
+    )]
     private ?InventoryPricehouse $price = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $created = null;
 
-    #[ORM\OneToMany(mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'], orphanRemoval: true) ]
+    #[ORM\OneToMany(
+        mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'], orphanRemoval: true
+    )]
     private Collection $parameters;
 
     public function __construct()
