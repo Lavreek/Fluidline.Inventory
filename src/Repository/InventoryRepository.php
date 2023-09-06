@@ -70,12 +70,7 @@ class InventoryRepository extends ServiceEntityRepository
         if (!empty($havingKeys) and !empty($havingValues)) {
             $ids = $paramhouse->findByParameters($havingKeys, $havingValues);
 
-            $str_ids = [];
-            foreach ($ids as $id) {
-                $str_ids[] = array_shift($id);
-            }
-
-            $query->andWhere("i.id IN (". implode(',', $str_ids) .")");
+            $query->andWhere("i.id IN ($ids)");
         }
     }
 

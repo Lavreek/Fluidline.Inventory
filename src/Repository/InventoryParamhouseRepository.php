@@ -21,7 +21,7 @@ class InventoryParamhouseRepository extends ServiceEntityRepository
         parent::__construct($registry, InventoryParamhouse::class);
     }
 
-    public function findByParameters($keys, $values) : array
+    public function findByParameters($keys, $values) : string
     {
         return $this->createQueryBuilder('p')
             ->select('identity(p.code)')
@@ -29,9 +29,7 @@ class InventoryParamhouseRepository extends ServiceEntityRepository
             ->andWhere("p.value in ('". implode("','", $values) ."')")
             ->groupBy('p.code')
             ->having("COUNT(p.code) = ". count($keys))
-            ->setMaxResults(100)
-            ->getQuery()
-            ->getResult()
+            ->getDQL()
         ;
     }
 
