@@ -2,6 +2,9 @@
 
 namespace App\Command;
 
+use App\Entity\Inventory;
+use App\Entity\InventoryPricehouse;
+use App\Repository\InventoryRepository;
 use App_KernelDevDebugContainer;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
@@ -65,11 +68,31 @@ class PersistInventoryCommand extends Command
             $f = fopen($filename, 'r');
 
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
+                /** @var Inventory[] $serializeData */
                 $serializeData = unserialize(stream_get_contents($f));
 
                 for ($i = 0; $i < count($serializeData); $i++) {
                     $entityManager->persist($serializeData[$i]);
                 }
+
+                $entityManager->flush();
+                $entityManager->clear();
+
+                for ($i = 0; $i < count($serializeData); $i++) {
+                    $inventory = $entityManager->getRepository(Inventory::class);
+                    $code = $inventory->findOneBy(['code' => $serializeData[$i]->getCode()]);
+
+                    if (!is_null($code)) {
+                        $pricehouse = new InventoryPricehouse();
+                        $pricehouse->setValue(0);
+                        $pricehouse->setWarehouse(0);
+                        $pricehouse->setCode($code);
+                        $pricehouse->setCurrency('$');
+
+                        $entityManager->persist($pricehouse);
+                    }
+                }
+
                 $entityManager->flush();
                 $entityManager->clear();
 

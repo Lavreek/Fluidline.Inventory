@@ -87,6 +87,10 @@ class FileReader
                             }
 
                             foreach ($parameters[$key] as $groupKey => $groupValue) {
+                                if (!isset($parameters[$key][$groupKey][$i])) {
+                                    continue;
+                                }
+
                                 $group = [
                                     'name' => $groupKey,
                                     'value' => trim($parameters[$key][$groupKey][$i], "\""),
