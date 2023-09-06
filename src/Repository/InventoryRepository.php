@@ -3,7 +3,11 @@
 namespace App\Repository;
 
 use App\Entity\Inventory;
+use App\Entity\InventoryParamhouse;
+use App\Service\QueueBuilder;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query\Expr;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,9 +25,60 @@ class InventoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Inventory::class);
     }
 
+
     /**
      * @return Inventory[] Returns an array of Inventory objects
      */
+    public function findByOrder($serial, $order): array
+    {
+        $query = $this->createQueryBuilder('i')
+            ->select('i')
+            ->andWhere('i.serial = :serial')
+            ->setParameter('serial', $serial);
+
+        $this->setOrderParameters($query, $order);
+
+        return $query
+            ->orderBy('i.id', 'ASC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    private function setOrderParameters(QueryBuilder &$query, $order)
+    {
+        $manager = $this->getEntityManager();
+
+        $havingKeys = $havingValues = [];
+
+        if (!is_null($order)) {
+            foreach ($order as $item) {
+                if (!in_array($item['key'], $havingKeys)) {
+                    $havingKeys[] = $item['key'];
+                }
+
+                if (!in_array($item['value'], $havingValues)) {
+                    $havingValues[] = $item['value'];
+                }
+            }
+        }
+
+        /** @var InventoryParamhouseRepository $paramhouse */
+        $paramhouse = $manager->getRepository(InventoryParamhouse::class);
+
+        if (!empty($havingKeys) and !empty($havingValues)) {
+            $ids = $paramhouse->findByParameters($havingKeys, $havingValues);
+
+            $str_ids = [];
+            foreach ($ids as $id) {
+                $str_ids[] = array_shift($id);
+            }
+
+            $query->andWhere("i.id IN (". implode(',', $str_ids) .")");
+        }
+    }
+
     public function removeBySerialType(string $serial, string $type) : void
     {
         $this->createQueryBuilder('i')

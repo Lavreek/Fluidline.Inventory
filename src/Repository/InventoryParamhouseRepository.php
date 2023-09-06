@@ -21,6 +21,20 @@ class InventoryParamhouseRepository extends ServiceEntityRepository
         parent::__construct($registry, InventoryParamhouse::class);
     }
 
+    public function findByParameters($keys, $values) : array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('identity(p.code)')
+            ->andWhere("p.name in ('". implode("','", $keys) ."')")
+            ->andWhere("p.value in ('". implode("','", $values) ."')")
+            ->groupBy('p.code')
+            ->having("COUNT(p.code) = ". count($keys))
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return InventoryParamhouse[] Returns an array of InventoryParamhouse objects
 //     */
