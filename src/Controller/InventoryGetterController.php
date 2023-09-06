@@ -36,7 +36,7 @@ class InventoryGetterController extends AbstractController
         return new JsonResponse(['filter' => $parametersArray, 'products' => $serializerArray]);
     }
 
-    #[Route('/get/ordered/{serial}', name: 'app_get_serial', methods: ['POST'])]
+    #[Route('/get/ordered/{serial}', name: 'app_get_ordered_serial', methods: ['POST'])]
     public function getOrderedSerial($serial, Request $request, ManagerRegistry $registry): JsonResponse
     {
         $requestData = $request->request->all();
