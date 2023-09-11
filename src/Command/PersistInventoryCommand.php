@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Inventory;
+use App\Entity\InventoryAttachmenthouse;
 use App\Entity\InventoryPricehouse;
 use App\Repository\InventoryRepository;
 use App_KernelDevDebugContainer;
@@ -89,7 +90,13 @@ class PersistInventoryCommand extends Command
                         $pricehouse->setCode($code);
                         $pricehouse->setCurrency('$');
 
+                        $attachmenthouse = new InventoryAttachmenthouse();
+                        $attachmenthouse->setImage("");
+                        $attachmenthouse->setModel("");
+                        $attachmenthouse->setCode($code);
+
                         $entityManager->persist($pricehouse);
+                        $entityManager->persist($attachmenthouse);
                     }
                 }
 

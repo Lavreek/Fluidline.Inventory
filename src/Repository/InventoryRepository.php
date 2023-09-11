@@ -25,6 +25,34 @@ class InventoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Inventory::class);
     }
 
+    /**
+     * @return Inventory[] Returns an array of Inventory objects
+     */
+    public function distinctSerial(): array
+    {
+        return $this->createQueryBuilder('i')
+            ->distinct()
+            ->select("i.serial")
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @return Inventory[] Returns an array of Inventory objects
+     */
+    public function findBySerial($serial): array
+    {
+        return $this->createQueryBuilder('i')
+            ->select("i")
+            ->where('i.serial = :serial')
+            ->setParameter('serial', $serial)
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 
     /**
      * @return Inventory[] Returns an array of Inventory objects

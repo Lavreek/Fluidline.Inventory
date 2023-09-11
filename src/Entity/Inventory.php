@@ -30,7 +30,8 @@ class Inventory
     private ?string $code = null;
 
     #[ORM\OneToOne(
-        mappedBy: 'code', targetEntity: InventoryPricehouse::class, cascade: ['persist', 'remove'], orphanRemoval: true
+        mappedBy: 'code', targetEntity: InventoryPricehouse::class, cascade: ['persist', 'remove'],
+        orphanRemoval: true
     )]
     private ?InventoryPricehouse $price = null;
 
@@ -38,9 +39,16 @@ class Inventory
     private ?\DateTimeInterface $created = null;
 
     #[ORM\OneToMany(
-        mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'], orphanRemoval: true
+        mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'],
+        orphanRemoval: true
     )]
     private Collection $parameters;
+
+    #[ORM\OneToOne(
+        mappedBy: 'code', targetEntity: InventoryAttachmenthouse::class, cascade: ['persist', 'remove'],
+        orphanRemoval: true
+    )]
+    private ?InventoryAttachmenthouse $attachments = null;
 
     public function __construct()
     {
@@ -138,6 +146,28 @@ class Inventory
                 $parameter->setCode(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getAttachments(): ?InventoryAttachmenthouse
+    {
+        return $this->attachments;
+    }
+
+    public function setAttachments(?InventoryAttachmenthouse $attachments): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($attachments === null && $this->attachments !== null) {
+            $this->attachments->setCode(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($attachments !== null && $attachments->getCode() !== $this) {
+            $attachments->setCode($this);
+        }
+
+        $this->attachments = $attachments;
 
         return $this;
     }

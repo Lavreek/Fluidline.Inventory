@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{% endblock %}
+
+{% block body %}
+<style>
+    table {
+        width: 100%;
+    }
+    ._item {
+        border-bottom: 2em solid transparent;
+    }
+</style>
+<table>
+    {% for i in products %}
+        <tr class="_item">
+            <td>{{ i.id }}</td>
+            <td>{{ i.serial }}</td>
+            <td>{{ i.type }}</td>
+            <td>{{ i.code }}</td>
+            <td>
+                <table>
+                    <tr>
+                        <td>id</td>
+                        <td>Значение</td>
+                        <td>Валюта</td>
+                        <td>Склад</td>
+                    </tr>
+                    <tr>
+                        <td>{{ i.price.id }}</td>
+                        <td>{{ i.price.value }}</td>
+                        <td>{{ i.price.currency }}</td>
+                        <td>{{ i.price.warehouse }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table>
+                    <tr>
+                        <td>id</td>
+                        <td>Название</td>
+                        <td>Описание</td>
+                        <td>Значение</td>
+                    </tr>
+                    {% for parameters in i['parameters'] %}
+                        <tr>
+                            <td>{{ parameters.id }}</td>
+                            <td>{{ parameters.name }}</td>
+                            <td>{{ parameters.description }}</td>
+                            <td>{{ parameters.value }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+{% endblock %}

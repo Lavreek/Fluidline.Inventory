@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{% endblock %}
+
+{% block body %}
+    <style>
+        ._link-list {
+            display: flex;
+            flex-direction: column;
+        }
+        ._link {
+            margin: 4px 0;
+        }
+    </style>
+    <div class="_link-list">
+        {% for i in serials %}
+            <a class="_link" href="./serial/{{ i.serial }}">{{ i.serial }}</a>
+        {% endfor %}
+    </div>
+
+{% endblock %}

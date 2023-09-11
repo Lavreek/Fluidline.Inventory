@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello InventoryGeneratorController!{% endblock %}
+
+{% block body %}
+    <style>
+        ._list {
+            display: flex;
+            flex-direction: column;
+            row-gap: .5rem;
+        }
+    </style>
+    <div class="_list">
+        {% if file == true %}
+            <a href="/generator/images.csv" download="images">Скачать файл</a>
+        {% endif %}
+        {{ form_start(generate_form) }}
+        {{ form_end(generate_form) }}
+    </div>
+{% endblock %}
