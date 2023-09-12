@@ -30,7 +30,7 @@ class InventoryGetterController extends AbstractController
 
         $filter = $this->getSerialFilter($registry, $serial);
 
-        $products = $this->prepareRequest($inventory);
+        $products = $this->prepareRequest($inventory, $filter);
 
         return new JsonResponse(['filter' => $filter, 'products' => $products]);
     }
@@ -62,7 +62,7 @@ class InventoryGetterController extends AbstractController
         }
 
         $filter = $this->getSerialFilter($registry, $serial);
-        $products = $this->prepareRequest($inventory);
+        $products = $this->prepareRequest($inventory, $filter);
 
         return new JsonResponse(['filter' => $filter, 'products' => $products]);
     }
@@ -91,24 +91,12 @@ class InventoryGetterController extends AbstractController
 
         $filter = $inventoryRepository->getSerialFilter($serial);
 
-        $construct = [];
-
-        foreach ($filter as $parameter) {
-            $construct[$parameter['name']]['values'][] = $parameter['value'];
-
-            if (!is_null($parameter['description'])) {
-                $construct[$parameter['name']]['descriptions'][] = $parameter['description'];
-            } else {
-                $construct[$parameter['name']]['descriptions'][] = "";
-            }
-        }
-
-        return $construct;
+        return $filter;
     }
 
-    private function prepareRequest($inventory) : array
+    private function prepareRequest($inventory, &$filter) : array
     {
-        $serializerArray =  [];
+        $serializerArray = $filterOrder = $filterConstructed = [];
 
         foreach ($inventory as $item) {
             $serialize = Serializer::serializeElement($item);
@@ -116,6 +104,10 @@ class InventoryGetterController extends AbstractController
             $object = json_decode($serialize, true);
 
             foreach ($object['parameters'] as $parameterIndex => $parameter) {
+                if (!in_array($parameter['name'], $filterOrder)) {
+                    $filterOrder[] = $parameter['name'];
+                }
+
                 unset(
                     $object['parameters'][$parameterIndex]['id'],
                     $object['parameters'][$parameterIndex]['code'],
@@ -130,6 +122,22 @@ class InventoryGetterController extends AbstractController
 
             $serializerArray[] = $object;
         }
+
+        foreach ($filterOrder as $filterPosition) {
+            foreach ($filter as $item) {
+                if ($item['name'] == $filterPosition) {
+                    $filterConstructed[$parameter['name']]['values'][] = $parameter['value'];
+
+                    if (!is_null($parameter['description'])) {
+                        $filterConstructed[$parameter['name']]['descriptions'][] = $parameter['description'];
+                    } else {
+                        $filterConstructed[$parameter['name']]['descriptions'][] = "";
+                    }
+                }
+            }
+        }
+
+        $filter = $filterConstructed;
 
         return $serializerArray;
     }
