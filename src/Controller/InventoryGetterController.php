@@ -28,9 +28,11 @@ class InventoryGetterController extends AbstractController
         /** @var Inventory[] $inventory */
         $inventory = $inventoryRepository->findBy(['serial' => $serial], limit: $limit);
 
-        $this->prepareRequest($inventory, $parametersArray, $serializerArray);
+        $filter = $this->getSerialFilter($registry, $serial);
 
-        return new JsonResponse(['filter' => $parametersArray, 'products' => $serializerArray]);
+        $products = $this->prepareRequest($inventory);
+
+        return new JsonResponse(['filter' => $filter, 'products' => $products]);
     }
 
     #[Route('/get/ordered/{serial}', name: 'app_get_ordered_serial', methods: ['POST'])]
@@ -51,7 +53,7 @@ class InventoryGetterController extends AbstractController
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $manager->getRepository(Inventory::class);
 
-            $inventory = $inventoryRepository->findByOrder($serial, $order);
+        $inventory = $inventoryRepository->findByOrder($serial, $order);
 
         foreach ($inventory as $itemIndex => $item) {
             if (get_class($item) !== "App\Entity\Inventory") {
@@ -59,9 +61,10 @@ class InventoryGetterController extends AbstractController
             }
         }
 
-        $this->prepareRequest($inventory, $parametersArray, $serializerArray);
+        $filter = $this->getSerialFilter($registry, $serial);
+        $products = $this->prepareRequest($inventory);
 
-        return new JsonResponse(['filter' => $parametersArray, 'products' => $serializerArray]);
+        return new JsonResponse(['filter' => $filter, 'products' => $products]);
     }
 
     #[Route('/get/product/{code}', name: 'app_get_product')]
@@ -78,9 +81,34 @@ class InventoryGetterController extends AbstractController
         return new JsonResponse($item);
     }
 
-    private function prepareRequest($inventory, &$parametersArray, &$serializerArray)
+    private function getSerialFilter(ManagerRegistry $registry, $serial): array
     {
-        $serializerArray = $parametersArray = [];
+        /** @var ObjectManager $manager */
+        $manager = $registry->getManager();
+
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $manager->getRepository(Inventory::class);
+
+        $filter = $inventoryRepository->getSerialFilter($serial);
+
+        $construct = [];
+
+        foreach ($filter as $parameter) {
+            $construct[$parameter['name']]['values'][] = $parameter['value'];
+
+            if (!is_null($parameter['description'])) {
+                $construct[$parameter['name']]['descriptions'][] = $parameter['description'];
+            } else {
+                $construct[$parameter['name']]['descriptions'][] = "";
+            }
+        }
+
+        return $construct;
+    }
+
+    private function prepareRequest($inventory) : array
+    {
+        $serializerArray =  [];
 
         foreach ($inventory as $item) {
             $serialize = Serializer::serializeElement($item);
@@ -88,17 +116,6 @@ class InventoryGetterController extends AbstractController
             $object = json_decode($serialize, true);
 
             foreach ($object['parameters'] as $parameterIndex => $parameter) {
-                if (!isset($parametersArray[$parameter['name']])) {
-                    $parametersArray[$parameter['name']] = ['values' => []];
-                }
-
-                if (!in_array($parameter['value'], $parametersArray[$parameter['name']]['values'])) {
-                    $parametersArray[$parameter['name']]['values'][] = $parameter['value'];
-                    if (isset($parameter['description'])) {
-                        $parametersArray[$parameter['name']]['description'][] = $parameter['description'];
-                    }
-                }
-
                 unset(
                     $object['parameters'][$parameterIndex]['id'],
                     $object['parameters'][$parameterIndex]['code'],
@@ -113,5 +130,7 @@ class InventoryGetterController extends AbstractController
 
             $serializerArray[] = $object;
         }
+
+        return $serializerArray;
     }
 }

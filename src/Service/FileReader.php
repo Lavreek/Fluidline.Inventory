@@ -87,10 +87,6 @@ class FileReader
                             }
 
                             foreach ($parameters[$key] as $groupKey => $groupValue) {
-                                if (!isset($parameters[$key][$groupKey][$i])) {
-                                    continue;
-                                }
-
                                 $group = [
                                     'name' => $groupKey,
                                     'value' => trim($parameters[$key][$groupKey][$i], "\""),
@@ -124,7 +120,7 @@ class FileReader
                         foreach ($parameters[$key] as $groupKey => $groupValue) {
                             $group = [
                                 'name' => $groupKey,
-                                'value' => $parameters[$key][$groupKey][$i],
+                                'value' => trim($parameters[$key][$groupKey][$i], "\""),
                             ];
 
                             if (isset($description[$groupKey])) {

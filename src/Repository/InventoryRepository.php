@@ -115,6 +115,23 @@ class InventoryRepository extends ServiceEntityRepository
         ;
     }
 
+    /**
+     * @return Inventory[] Returns an array of Inventory objects
+     */
+    public function getSerialFilter($serial): array
+    {
+        return $this->createQueryBuilder('i')
+            ->distinct()
+            ->select('ip.name', 'ip.value', 'ip.description')
+            ->andWhere('i.serial = :serial')
+            ->setParameter('serial', $serial)
+            ->innerJoin(InventoryParamhouse::class, 'ip', Expr\Join::WITH, 'i.id = ip.code')
+            ->orderBy('ip.name', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return Inventory[] Returns an array of Inventory objects
 //     */
