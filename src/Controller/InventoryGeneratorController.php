@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Inventory;
 use App\Entity\InventoryAttachmenthouse;
 use App\Form\GenerateType;
+use App\Repository\InventoryAttachmenthouseRepository;
+use App\Repository\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,56 +15,72 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryGeneratorController extends AbstractController
 {
-    #[Route('/generator/image', name: 'app_inventory_generator')]
+    #[Route('/generate/image', name: 'app_inventory_generator')]
     public function generateImageCSV(Request $request, ManagerRegistry $registry): Response
     {
-        $cronLogPath = $this->getParameter('inventory_cron_execute');
+        $remoteAddress = $request->server->get('REMOTE_ADDR');
+
+        //ToDo: Make auth.
+        if (!in_array($remoteAddress, ['77.50.146.14', '185.180.124.14', '127.0.0.1'])) {
+            return new Response();
+        }
+
+        $cronLogPath = $this->getParameter('inventory_memory_usage');
         $memoryUsage = memory_get_usage();
 
-        $generatorPath = $this->getParameter('inventory_generator_directory');
-        $imageFile = "images.csv";
-        $image = false;
+        $generateImagePath = $this->getParameter('inventory_generator_images_directory');
 
-        if (file_exists($generatorPath . $imageFile)) {
-            $image = true;
-        }
+        $this->checkDirectory($generateImagePath);
+
+        $generatedFiles = array_diff(scandir($generateImagePath), ['.', '..']);
 
         $form = $this->createForm(GenerateType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() and $form->isValid()) {
+
+            /** @var InventoryAttachmenthouseRepository $attachmentsRepository */
             $attachmentsRepository = $registry->getRepository(InventoryAttachmenthouse::class);
+
+            $attachmentsSize = $attachmentsRepository->getAttachmentsSize();
+            $size = array_shift($attachmentsSize);
+
+            /** @var InventoryRepository $inventoryRepository */
             $inventoryRepository = $registry->getRepository(Inventory::class);
 
-            $imageRows = "code;attach_id;image\n";
+            $limit = 50000;
+            $offset = 0;
+            $chunkHeader = "code;attach_id;image\n";
+            $iterations = (int)ceil($size / $limit);
 
-            if (!is_dir($generatorPath)) {
-                mkdir($generatorPath, recursive: true);
-            }
+            for ($i = 0; $i < $iterations; $i++) {
+                $items = $chunkHeader;
 
-            $attachments = $attachmentsRepository->findAll();
+                $attachments = $attachmentsRepository->loadAttachments(offset: $offset, limit: $limit);
+                $filepath = $generateImagePath . "part-". $i + 1 ."-images.csv";
 
-            while ($attachments) {
-                $attach = array_shift($attachments);
-                $inventory = $inventoryRepository->findOneBy(['id' => $attach->getCode()]);
+                while ($attachments) {
+                    $attach = array_shift($attachments);
+                    $inventory = $inventoryRepository->findOneBy(['id' => $attach->getCode()]);
 
-                $imageRows .= $inventory->getCode() .";". $attach->getId() .";". $attach->getImage() ."\n";
+                    $items .= $inventory->getCode() .";". $attach->getId() .";". $attach->getImage() ."\n";
 
-                if (strlen($imageRows) > (1024 * 1024)) {
                     $writed = false;
 
-                    while (!$writed) {
-                        $writed = file_put_contents($generatorPath . $imageFile, $imageRows);
+                    if (strlen($items) > (1024 * 1024)) {
+                        while (!$writed) {
+                            $writed = file_put_contents($filepath, $items);
+                        }
+
+                        $items = "";
                     }
 
-                    $imageRows = "";
+                    while (!$writed) {
+                        $writed = file_put_contents($filepath, $items);
+                    }
                 }
-            }
 
-            $writed = false;
-
-            while (!$writed) {
-                $writed = file_put_contents($generatorPath . $imageFile, $imageRows);
+                $offset++;
             }
 
             file_put_contents(
@@ -77,8 +95,14 @@ class InventoryGeneratorController extends AbstractController
 
         return $this->render('inventory_generator/index.html.twig', [
             'generate_form' => $form->createView(),
-            'file' => $image,
-            'controller_name' => 'InventoryGeneratorController',
+            'files' => $generatedFiles,
         ]);
+    }
+
+    private function checkDirectory($path)
+    {
+        if (!is_dir($path)) {
+            mkdir($path, recursive: true);
+        }
     }
 }

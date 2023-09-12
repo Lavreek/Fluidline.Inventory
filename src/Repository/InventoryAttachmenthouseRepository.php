@@ -21,6 +21,32 @@ class InventoryAttachmenthouseRepository extends ServiceEntityRepository
         parent::__construct($registry, InventoryAttachmenthouse::class);
     }
 
+    /**
+     * @return InventoryAttachmenthouse[] Returns an array of InventoryAttachmenthouse objects
+     */
+    public function loadAttachments(int $offset = 0, int $limit = 50000): array
+    {
+        return $this->createQueryBuilder('i')
+            ->orderBy('i.id', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($limit * $offset)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @return InventoryAttachmenthouse[] Returns an array of InventoryAttachmenthouse objects
+     */
+    public function getAttachmentsSize(): array
+    {
+        return $this->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->getQuery()
+            ->getSingleResult()
+        ;
+    }
+
 //    /**
 //     * @return InventoryAttachmenthouse[] Returns an array of InventoryAttachmenthouse objects
 //     */

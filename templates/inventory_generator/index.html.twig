@@ -9,12 +9,17 @@
             flex-direction: column;
             row-gap: .5rem;
         }
+        ._files-grid {
+            grid-template-columns: repeat(5, 1fr);
+        }
     </style>
     <div class="_list">
-        {% if file == true %}
-            <a href="/generator/images.csv" download="images">Скачать файл</a>
-        {% endif %}
         {{ form_start(generate_form) }}
         {{ form_end(generate_form) }}
+        <div class="_files-grid">
+            {% for i in files %}
+                <a href="/generator/images/{{ i }}" download="images">Скачать файл "{{ i }}"</a>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}
