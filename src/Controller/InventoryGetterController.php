@@ -126,12 +126,12 @@ class InventoryGetterController extends AbstractController
         foreach ($filterOrder as $filterPosition) {
             foreach ($filter as $item) {
                 if ($item['name'] == $filterPosition) {
-                    $filterConstructed[$parameter['name']]['values'][] = $parameter['value'];
+                    $filterConstructed[$item['name']]['values'][] = $item['value'];
 
-                    if (!is_null($parameter['description'])) {
-                        $filterConstructed[$parameter['name']]['descriptions'][] = $parameter['description'];
+                    if (!is_null($item['description'])) {
+                        $filterConstructed[$item['name']]['descriptions'][] = $item['description'];
                     } else {
-                        $filterConstructed[$parameter['name']]['descriptions'][] = "";
+                        $filterConstructed[$item['name']]['descriptions'][] = "";
                     }
                 }
             }
