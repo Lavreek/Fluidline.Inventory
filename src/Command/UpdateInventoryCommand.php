@@ -64,7 +64,9 @@ class UpdateInventoryCommand extends Command
 
                     if ($inventory) {
                         $data = $serializeData[$i];
-                        $pricehouse = new InventoryPricehouse();
+
+                        /** @var InventoryPricehouse $pricehouse */
+                        $pricehouse = $inventory->getPrice();
 
                         $pricehouse->setCode($inventory);
                         $pricehouse->setValue(

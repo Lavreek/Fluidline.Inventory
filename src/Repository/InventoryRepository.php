@@ -32,8 +32,7 @@ class InventoryRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('i')
             ->distinct()
-            ->select("i.serial")
-            ->setMaxResults(100)
+            ->select("i.serial", 'i.type')
             ->getQuery()
             ->getResult()
         ;

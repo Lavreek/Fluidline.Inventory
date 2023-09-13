@@ -37,6 +37,22 @@ class PersistInventoryCommand extends Command
         ;
     }
 
+    private function checkFolder($path) : void
+    {
+        if (!is_dir($path)) {
+            mkdir($path, recursive: true);
+        }
+    }
+
+    private function writeToFile($path, $content) : void
+    {
+        $writed = false;
+
+        while (!$writed) {
+            $writed = file_put_contents($path, $content, FILE_APPEND);
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
         ini_set('memory_limit', '1024M');
@@ -51,6 +67,27 @@ class PersistInventoryCommand extends Command
 
         /** @var string $cronLogPath | Путь к файлу логирования данной задачи */
         $cronLogPath = $container->getParameter('inventory_cron_execute');
+
+        /** @var string $imageSerialPath | Путь к файлу изображений серии */
+        $priceSerialPath = $container->getParameter('inventory_generator_prices_directory');
+        $priceHeader = "code;value;count;currency\n";
+        $priceCSV = "";
+
+        $this->checkFolder($priceSerialPath);
+
+        /** @var string $imageSerialPath | Путь к файлу изображений серии */
+        $imageSerialPath = $container->getParameter('inventory_generator_images_directory');
+        $imageHeader = "code;code_id;image_path;\n";
+        $imageCSV = "";
+
+        $this->checkFolder($imageSerialPath);
+
+        /** @var string $modelSerialPath | Путь к файлу моделей серии */
+        $modelSerialPath = $container->getParameter('inventory_generator_models_directory');
+        $modelHeader = "code;code_id;model_path;\n";
+        $modelCSV = "";
+
+        $this->checkFolder($modelSerialPath);
 
         /** @var Registry $doctrineRegistry */
         $doctrineRegistry = $container->get('doctrine');
@@ -81,18 +118,40 @@ class PersistInventoryCommand extends Command
 
                 for ($i = 0; $i < count($serializeData); $i++) {
                     $inventory = $entityManager->getRepository(Inventory::class);
+                    /** @var Inventory $code */
                     $code = $inventory->findOneBy(['code' => $serializeData[$i]->getCode()]);
 
                     if (!is_null($code)) {
+                        if (!file_exists($priceSerialPath . $serial . ".csv")) {
+                            touch($priceSerialPath . $serial . ".csv");
+                            $priceCSV .= $priceHeader;
+                        }
+
                         $pricehouse = new InventoryPricehouse();
                         $pricehouse->setValue(0);
                         $pricehouse->setWarehouse(0);
                         $pricehouse->setCode($code);
                         $pricehouse->setCurrency('$');
 
+                        $priceCSV .= $code->getCode() .";0;0;$\n";
+
+                        if (!file_exists($imageSerialPath . $serial . ".csv")) {
+                            touch($imageSerialPath . $serial . ".csv");
+                            $imageCSV .= $imageHeader;
+                        }
+
+                        if (!file_exists($modelSerialPath . $serial . ".csv")) {
+                            touch($modelSerialPath . $serial . ".csv");
+                            $modelCSV .= $modelHeader;
+                        }
+
                         $attachmenthouse = new InventoryAttachmenthouse();
                         $attachmenthouse->setImage("");
+                        $imageCSV .= $code->getCode() .";". $code->getId() .";\n";
+
                         $attachmenthouse->setModel("");
+                        $modelCSV .= $code->getCode() .";". $code->getId() .";\n";
+
                         $attachmenthouse->setCode($code);
 
                         $entityManager->persist($pricehouse);
@@ -101,6 +160,11 @@ class PersistInventoryCommand extends Command
                 }
 
                 $entityManager->flush();
+
+                $this->writeToFile($priceSerialPath . $serial . ".csv", $priceCSV);
+                $this->writeToFile($imageSerialPath . $serial . ".csv", $imageCSV);
+                $this->writeToFile($modelSerialPath . $serial . ".csv", $modelCSV);
+
                 $entityManager->clear();
 
                 fclose($f);

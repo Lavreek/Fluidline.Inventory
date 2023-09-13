@@ -34,15 +34,15 @@ class InventoryViewerController extends AbstractController
 
         $products = $inventoryRepository->findBySerial($serial);
 
-        $productsSerialized = [];
+        $productsTable = [];
 
         foreach ($products as $product) {
-            $productsSerialized[] = json_decode(Serializer::serializeElement($product), true);
+            $productsTable[] = json_decode(Serializer::serializeElement($product), true);
         }
 
         return $this->render('inventory_viewer/products.html.twig', [
-            'products' => $productsSerialized,
+            'serial' => $serial,
+            'products' => $productsTable,
         ]);
     }
-
 }

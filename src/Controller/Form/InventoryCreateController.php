@@ -73,13 +73,37 @@ class InventoryCreateController extends AbstractController
 
                 $manager->commit();
 
+                /** @var string $imageSerialPath | Путь к файлу изображений серии */
+                $priceSerialPath = $this->getParameter('inventory_generator_prices_directory');
+
+                $priceFile = $priceSerialPath . $inventory_serial . ".csv";
+                if (file_exists($priceFile)) {
+                    unlink($priceFile);
+                }
+
+                /** @var string $imageSerialPath | Путь к файлу изображений серии */
+                $imageSerialPath = $this->getParameter('inventory_generator_images_directory');
+
+                $imageFile = $imageSerialPath . $inventory_serial . ".csv";
+                if (file_exists($imageFile)) {
+                    unlink($imageFile);
+                }
+
+                /** @var string $modelSerialPath | Путь к файлу моделей серии */
+                $modelSerialPath = $this->getParameter('inventory_generator_models_directory');
+
+                $modelFile = $modelSerialPath . $inventory_serial . ".csv";
+                if (file_exists($modelFile)) {
+                    unlink($modelFile);
+                }
+
                 register_shutdown_function([$this, 'inventoryRemains'], $chunkCount);
 
             } catch (\Exception | \Throwable $exception) {
                 $manager->rollback();
             }
 
-            return $this->redirectToRoute('app_inventory_constructor');
+            return $this->redirectToRoute('app_home');
         }
 
         return new JsonResponse(['Форма не прошла валидацию в системе']);

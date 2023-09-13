@@ -1,0 +1,36 @@
+<style>
+    ._navigation-divider {
+        width: 320px;
+        height: 100vh;
+    }
+    ._navigation {
+        display: flex;
+        position: fixed;
+        left: 0;
+        top: 0;
+        flex-direction: column;
+        width: 320px;
+        border-right: 1px solid rgba(128, 128, 128, 0.5);
+        height: 100vh;
+        overflow-y: auto;
+        padding: 2em 0;
+    }
+
+    ._link {
+        font-size: 16px;
+        display: block;
+        padding: .5rem 1rem;
+        color: black;
+        transition: .5s;
+        text-decoration: none;
+    }
+
+    ._link:hover {
+        color: #2563EB;
+    }
+</style>
+<div class="_navigation-divider"></div>
+<div class="_navigation">
+    <a class="_link" href="{{ path('app_download') }}">Загрузить продукцию</a>
+    <a class="_link" href="{{ path('app_view_serial') }}">Загруженные серии</a>
+</div>

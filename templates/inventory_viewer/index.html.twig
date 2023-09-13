@@ -1,21 +1,43 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{% endblock %}
+{% block title %}Загруженные серии{% endblock %}
 
 {% block body %}
     <style>
-        ._link-list {
+        ._serial-list {
             display: flex;
             flex-direction: column;
         }
-        ._link {
-            margin: 4px 0;
+
+        ._link-group {
+            display: flex;
+            column-gap: .5em;
         }
     </style>
-    <div class="_link-list">
-        {% for i in serials %}
-            <a class="_link" href="./serial/{{ i.serial }}">{{ i.serial }}</a>
-        {% endfor %}
-    </div>
+    <div class="_container">
+        {{ include('layouts/navigation.html.twig') }}
+        <div class="_serial-list">
+            {% for i in serials %}
+                <div class="_link-group">
+                    <a class="_link" href="./serial/{{ i.serial }}">{{ i.type }} | {{ i.serial }}</a>
+                    {% if getImageFile(i.serial) == true %}
+                        Изображения:
+                        <a class="_link" href="/generator/images/{{ i.serial }}.csv" download="{{ i.serial }}">Скачать</a>
+                        <a class="_link" href="/">Обновить</a>
+                    {% endif %}
+                    {% if getModelFile(i.serial) == true %}
+                        Модели:
+                        <a class="_link" href="/generator/models/{{ i.serial }}.csv" download="{{ i.serial }}">Скачать</a>
+                        <a class="_link" href="/">Обновить</a>
+                    {% endif %}
+                    {% if getPriceFile(i.serial) == true %}
+                        Цены:
+                        <a class="_link" href="/generator/prices/{{ i.serial }}.csv" download="{{ i.serial }}">Скачать</a>
+                        <a class="_link" href="/">Обновить</a>
+                    {% endif %}
+                </div>
 
+            {% endfor %}
+        </div>
+    </div>
 {% endblock %}

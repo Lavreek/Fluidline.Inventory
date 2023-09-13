@@ -87,13 +87,20 @@ class FileReader
                             }
 
                             foreach ($parameters[$key] as $groupKey => $groupValue) {
-                                $group = [
-                                    'name' => $groupKey,
-                                    'value' => trim($parameters[$key][$groupKey][$i], "\""),
-                                ];
+                                if (!isset($parameters[$key][$groupKey][$i])) {
+                                    $group = [
+                                        'name' => $groupKey,
+                                        'value' => "",
+                                    ];
+                                } else {
+                                    $group = [
+                                        'name' => $groupKey,
+                                        'value' => trim($parameters[$key][$groupKey][$i], "\""),
+                                    ];
 
-                                if (isset($description[$groupKey])) {
-                                    $group['description'] = $description[$groupKey];
+                                    if (isset($description[$groupKey])) {
+                                        $group['description'] = $description[$groupKey];
+                                    }
                                 }
 
                                 $productsInterim[count($productsInterim) - 1]['parameters'][] = $group;

@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryConstructorController extends AbstractController
 {
-    #[Route('/constructor', name: 'app_inventory_constructor', methods: ['GET'])]
+    #[Route('/download', name: 'app_download', methods: ['GET'])]
     public function index(Request $request): Response
     {
         $remoteAddress = $request->server->get('REMOTE_ADDR');
@@ -29,7 +29,7 @@ class InventoryConstructorController extends AbstractController
         ]);
     }
 
-    #[Route('/appraise', name: 'app_inventory_appraise', methods: ['GET'])]
+    #[Route('/appraise', name: 'app_appraise', methods: ['GET'])]
     public function appraise(Request $request): Response
     {
         $remoteAddress = $request->server->get('REMOTE_ADDR');
