@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Обновление {{ type }} серии {{ serial }}{% endblock %}
+
+{% block body %}
+    <div class="_container">
+        {{ include('layouts/navigation.html.twig') }}
+        {{ form_start(serial_form) }}
+        {{ form_end(serial_form) }}
+    </div>
+{% endblock %}

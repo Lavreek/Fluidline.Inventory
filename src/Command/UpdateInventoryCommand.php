@@ -14,9 +14,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'updateInventory',
-    description: 'Add a short description for your command',
+    name: 'updateInventoryPrice',
+    description: 'Обновление цены продукции',
 )]
+
 class UpdateInventoryCommand extends Command
 {
     protected function configure(): void

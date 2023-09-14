@@ -3,32 +3,6 @@
 {% block title %}Загрузка продукции{% endblock %}
 
 {% block body %}
-    <style>
-        form {
-            display: flex;
-            flex-direction: column;
-            row-gap: 1em;
-        }
-
-        form div {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label, input, button {
-            font-size: 14px;
-            font-family: monospace;
-        }
-
-        label {
-            margin-bottom: .25rem;
-        }
-
-        input, button {
-            padding: .5rem 1rem;
-            border-radius: 12px;
-        }
-    </style>
     <div class="_container">
         {{ include('layouts/navigation.html.twig') }}
         {{ form_start(inventory_form) }}

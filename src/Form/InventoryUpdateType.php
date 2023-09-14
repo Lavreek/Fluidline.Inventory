@@ -5,17 +5,18 @@ namespace App\Form;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 
-class InventoryPricesType extends AbstractType
+class InventoryUpdateType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('price_file', FileType::class, [
-                'label' => 'Файл цен (CSV файл) разделитель ";"',
+            ->add('update_file', FileType::class, [
+                'label' => 'Файл характеристик (CSV файл) разделитель ";"',
                 'constraints' => [
                     new File([
                         'maxSize' => '512k',
@@ -27,7 +28,7 @@ class InventoryPricesType extends AbstractType
                     ])
                 ],
             ])
-            ->add('price_submit', SubmitType::class, [
+            ->add('update_submit', SubmitType::class, [
                 'label' => 'Загрузить'
             ])
         ;
@@ -37,8 +38,6 @@ class InventoryPricesType extends AbstractType
     {
         $resolver->setDefaults([
             // Configure your form options here
-            'action' => '/appraise/create',
-            'method' => 'POST',
         ]);
     }
 }

@@ -77,14 +77,14 @@ class PersistInventoryCommand extends Command
 
         /** @var string $imageSerialPath | Путь к файлу изображений серии */
         $imageSerialPath = $container->getParameter('inventory_generator_images_directory');
-        $imageHeader = "code;code_id;image_path;\n";
+        $imageHeader = "code;code_id;image_path\n";
         $imageCSV = "";
 
         $this->checkFolder($imageSerialPath);
 
         /** @var string $modelSerialPath | Путь к файлу моделей серии */
         $modelSerialPath = $container->getParameter('inventory_generator_models_directory');
-        $modelHeader = "code;code_id;model_path;\n";
+        $modelHeader = "code;code_id;model_path\n";
         $modelCSV = "";
 
         $this->checkFolder($modelSerialPath);

@@ -7,7 +7,7 @@ parameters:
     inventory_input_directory: '%kernel.project_dir%/public/uploads/input/'
 
     inventory_serialize_directory: '%kernel.project_dir%/public/serialize/'
-    inventory_serialize_price_directory: '%kernel.project_dir%/public/serialize-price/'
+    inventory_serialize_update_directory: '%kernel.project_dir%/public/serialize-update/'
 
     inventory_generator_images_directory: '%kernel.project_dir%/public/generator/images/'
     inventory_generator_models_directory: '%kernel.project_dir%/public/generator/models/'

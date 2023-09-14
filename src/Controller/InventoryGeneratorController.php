@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Inventory;
 use App\Entity\InventoryAttachmenthouse;
-use App\Form\GenerateType;
+use App\Form\InventoryUpdateType;
 use App\Repository\InventoryAttachmenthouseRepository;
 use App\Repository\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -34,7 +34,7 @@ class InventoryGeneratorController extends AbstractController
 
         $generatedFiles = array_diff(scandir($generateImagePath), ['.', '..']);
 
-        $form = $this->createForm(GenerateType::class);
+        $form = $this->createForm(InventoryUpdateType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() and $form->isValid()) {
