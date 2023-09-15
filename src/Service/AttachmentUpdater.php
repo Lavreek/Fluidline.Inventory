@@ -2,47 +2,53 @@
 
 namespace App\Service;
 
+use App\Entity\Inventory;
+use App\Repository\InventoryRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
 final class AttachmentUpdater
 {
     private string $filepath;
 
     private string $serial;
 
-    public function __construct(string $serial = "", string $path)
-    {
-        $this->setFilepath($path);
-        $this->setSerial($serial);
-    }
+    private array $search = ["\r"];
 
-    private function setFilepath($path) : void
+    public function __construct() { }
+
+    public function setFilepath($path) : void
     {
         $this->filepath = $path;
     }
 
-    public function getFilepath()
+    public function getFilepath() : string|null
     {
         return $this->filepath;
     }
 
-    private function setSerial($serial) : void
+    public function setSerial($serial) : void
     {
         $this->serial = $serial;
     }
 
-    public function getSerial()
+    public function getSerial() : string|null
     {
         return $this->serial;
     }
 
-    public function updateAttachments(string $fileContent, string $column)
+    public function updateAttachments(string $fileContent, string $column) : string
     {
         $filepath = $this->getFilepath();
         $serial = $this->getSerial();
         $file = fopen($filepath . $serial . ".csv", 'r');
 
-        $search = ["\r"];
-        $fileContent = explode("\n", str_replace($search, '', $fileContent));
-        $newContent = "";
+        $fileContent = explode("\n", str_replace($this->search, '', $fileContent));
+
+        $newContent =
+        $cronContent = "";
+
+        $code_id =
+        $code = false;
 
         $row = 0;
         while ($data = fgetcsv($file, separator: ';')) {
@@ -50,29 +56,44 @@ final class AttachmentUpdater
                 $uploadedHeader = [];
 
                 foreach ($fileContent as $rowIndex => $uploadedRow) {
-                    if ($rowIndex < 1) {
-                        $uploadedHeader = explode(';', $uploadedRow);
+                    $uploadedRow = explode(';', $uploadedRow);
 
+                    if ($rowIndex === 0) {
+                        $uploadedHeader = $uploadedRow;
+
+                        if (in_array('code_id', $uploadedRow)) {
+                            $code_id = array_search('code_id', $uploadedRow);
+                        }
+
+                        if (in_array('code', $uploadedRow)) {
+                            $code = array_search('code', $uploadedRow);
+                        }
                     } else {
-                        if (in_array('code_id', $uploadedHeader)) {
-                            $code_id = array_search('code_id', $uploadedHeader);
-                            $uploadedRow = explode(';', $uploadedRow);
 
+                        if ($code_id !== false and $code === false) {
                             if (count($uploadedRow) == count($uploadedHeader)) {
-
                                 if ($data[1] == $uploadedRow[$code_id]) {
                                     $attachment = array_search($column, $uploadedHeader);
                                     $data[2] = $uploadedRow[$attachment];
+                                    $cronContent .= "{$data[0]};{$data[2]}\n";
                                 }
                             }
-                        } elseif (in_array('code', $uploadedHeader)) {
-                            $code = array_search('code', $uploadedHeader);
-                            $uploadedRow = explode(';', $uploadedRow);
-
+                        } elseif ($code !== false and $code_id === false) {
                             if (count($uploadedRow) == count($uploadedHeader)) {
                                 if ($data[0] == $uploadedRow[$code]) {
                                     $attachment = array_search($column, $uploadedHeader);
                                     $data[2] = $uploadedRow[$attachment];
+
+                                    $cronContent .= "{$data[0]};{$data[2]}\n";
+                                }
+                            }
+                        } elseif ($code_id !== false and $code !== false) {
+                            if (count($uploadedRow) == count($uploadedHeader)) {
+                                if ($data[0] == $uploadedRow[$code]) {
+                                    $attachment = array_search($column, $uploadedHeader);
+                                    $data[2] = $uploadedRow[$attachment];
+
+                                    $cronContent .= "{$data[$code]};{$data[$code_id]};{$data[2]}\n";
                                 }
                             }
                         }
@@ -84,12 +105,82 @@ final class AttachmentUpdater
 
             $row++;
         }
+        fclose($file);
 
-//        fwrite($file, $newContent);
+        file_put_contents($filepath . $serial . ".csv", $newContent);
 
-        dd($newContent, $fileContent);
+        if ($code !== false and $code_id !== false) {
+            $cronContent = "code;code_id;$column\n$cronContent";
 
+        }
+        if ($code_id !== false and $code === false) {
+            $cronContent = "code_id;$column\n$cronContent";
+        }
 
+        if ($code !== false and $code_id === false) {
+            $cronContent = "code;$column\n$cronContent";
+        }
 
+        return $cronContent;
+    }
+
+    public function updateEntity(ManagerRegistry $registry, string $fileContent, string $column, string $entityColumn)
+    {
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $registry->getRepository(Inventory::class);
+
+        $fileContent = explode("\n", str_replace($this->search, '', $fileContent));
+
+        $codeIndex = null;
+        // $codeIdIndex = null;
+        $columnIndex = null;
+
+        $entities = [];
+        $updatedHeader = [];
+
+        foreach ($fileContent as $rowIndex => $updatedRow) {
+            $updatedRow = explode(';', $updatedRow);
+
+            if ($rowIndex === 0) {
+                $updatedHeader = $updatedRow;
+                $codeIndex = array_search('code', $updatedHeader);
+                $columnIndex = array_search($column, $updatedHeader);
+
+                // $codeIdIndex = array_search('code_id', $updatedHeader);
+            } else {
+                if (is_null($columnIndex)) {
+                    return;
+                }
+
+                $inventory = $inventoryRepository->findOneBy(['code' => $updatedRow[$codeIndex]]);
+
+                if ($inventory) {
+                    if ($entityColumn !== "price") {
+                        $attachments = $inventory->getAttachments();
+                    } else {
+                        $attachments = $inventory->getPrice();
+                    }
+
+                    switch ($entityColumn) {
+                        case 'image' : {
+                            $attachments->setImage($updatedRow[$columnIndex]);
+                            break;
+                        }
+
+                        case 'model' : {
+                            $attachments->setModel($updatedRow[$columnIndex]);
+                            break;
+                        }
+                        case 'price' : {
+
+                        }
+                    }
+
+                    $entities[] = $attachments;
+                }
+            }
+        }
+
+        return $entities;
     }
 }

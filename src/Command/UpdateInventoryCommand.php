@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Inventory;
-use App\Entity\InventoryPricehouse;
+use App\Repository\InventoryRepository;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'updateInventoryPrice',
+    name: 'updateInventory',
     description: 'Обновление цены продукции',
 )]
 
@@ -38,7 +38,7 @@ class UpdateInventoryCommand extends Command
         $container = $this->getApplication()->getKernel()->getContainer();
 
         /** @var string $serializePath | Путь к сериализованным файлам */
-        $serializePath = $container->getParameter('inventory_serialize_price_directory');
+        $serializePath = $container->getParameter('inventory_serialize_update_directory');
 
         /** @var string $cronLogPath | Путь к файлу логирования данной задачи */
         $cronLogPath = $container->getParameter('inventory_cron_execute');
@@ -51,34 +51,100 @@ class UpdateInventoryCommand extends Command
         $serializeChunks = array_diff(scandir($serializePath), ['..', '.', '.gitignore']);
 
         if (count($serializeChunks) > 0) {
-            $chunk = array_shift($serializeChunks);
-            $filename = $serializePath . $chunk;
+            $serial = array_shift($serializeChunks);
+
+            $chunks = array_diff(
+                scandir($serializePath . $serial), ['..', '.', '.gitignore']
+            );
+
+            $chunksCount = count($chunks);
+            $chunk = array_diff($chunks);
+
+            $filename = $serializePath . $serial ."/". array_shift($chunk);
+
+            $fileContent = file_get_contents($filename);
+            $executedContent = "";
 
             $f = fopen($filename, 'r');
 
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
-                $serializeData = unserialize(stream_get_contents($f));
+                $row = 0;
 
-                for ($i = 0; $i < count($serializeData); $i++) {
-                    /** @var Inventory $inventory */
-                    $inventory = $entityManager->getRepository(Inventory::class)->findOneBy(['code' => $serializeData[$i]['code']]);
+                $commandColumn =
+                $commandColumnKey =
+                $attachmentColumn = null;
 
-                    if ($inventory) {
-                        $data = $serializeData[$i];
+                /** @var InventoryRepository $inventoryRepository */
+                $inventoryRepository = $entityManager->getRepository(Inventory::class);
 
-                        /** @var InventoryPricehouse $pricehouse */
-                        $pricehouse = $inventory->getPrice();
+                while ($data = fgetcsv($f, separator: ';')) {
+                    if ($row === 0) {
+                        if (in_array('code_id', $data) and is_null($commandColumn)) {
+                            $commandColumn = array_search('code_id', $data);
+                            $commandColumnKey = 'id';
+                        }
 
-                        $pricehouse->setCode($inventory);
-                        $pricehouse->setValue(
-                            str_replace(',', '.', $data['price'])
-                        );
-                        $pricehouse->setWarehouse($data['count']);
-                        $pricehouse->setCurrency($data['currency']);
+                        if (in_array('code', $data) and is_null($commandColumn)) {
+                            $commandColumn = array_search('code', $data);
+                            $commandColumnKey = 'code';
+                        }
 
-                        $inventory->setPrice($pricehouse);
+                        $attachmentColumn = $data[1];
 
-                        $entityManager->persist($inventory);
+                        if (in_array($attachmentColumn, ['value', 'currency', 'warehouse']) ) {
+                            unset($data[0]);
+
+                            $attachmentColumn = $data;
+                        }
+                    } else {
+                        $executedContent .= implode(';', $data) . "\n";
+                        $inventory = $inventoryRepository->findOneBy([$commandColumnKey => $data[$commandColumn]]);
+
+                        if (is_string($attachmentColumn)) {
+                            $attachment = $inventory->getAttachments();
+
+                            switch ($attachmentColumn) {
+                                case 'image_path' : {
+                                    $attachment->setImage($data[1]);
+                                    break;
+                                }
+
+                                case 'modal_path' : {
+                                    $attachment->setModel($data[1]);
+                                    $entityManager->persist($attachment);
+                                    break;
+                                }
+                            }
+
+                            $entityManager->persist($attachment);
+                        }
+
+                        if (is_array($attachmentColumn)) {
+                            $price = $inventory->getPrice();
+
+                            $price_value = array_search('price_value', $attachmentColumn);
+                            if ($price_value !== false) {
+                                $price->setValue($data[$price_value]);
+                            }
+
+                            $price_currency = array_search('price_currency', $attachmentColumn);
+                            if ($price_currency !== false) {
+                                $price->setValue($data[$price_currency]);
+                            }
+
+                            $price_warehouse = array_search('price_warehouse', $attachmentColumn);
+                            if ($price_warehouse !== false) {
+                                $price->setValue($data[$price_warehouse]);
+                            }
+
+                            $entityManager->persist($price);
+                        }
+                    }
+
+                    $row++;
+
+                    if ($row > 1000) {
+                        break;
                     }
                 }
 
@@ -87,7 +153,15 @@ class UpdateInventoryCommand extends Command
 
                 fclose($f);
 
-                unlink($filename);
+                file_put_contents($filename, str_replace($executedContent, '', $fileContent));
+
+                if ($row === 1) {
+                    unlink($filename);
+
+                    if ($chunksCount === 1) {
+                        rmdir(dirname($filename));
+                    }
+                }
             }
 
             if ($would_block) {
