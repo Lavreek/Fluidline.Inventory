@@ -69,21 +69,21 @@ class PersistInventoryCommand extends Command
         $cronLogPath = $container->getParameter('inventory_cron_execute');
 
         /** @var string $imageSerialPath | Путь к файлу изображений серии */
-        $priceSerialPath = $container->getParameter('inventory_generator_prices_directory');
+        $priceSerialPath = $container->getParameter('inventory_generator_directory') . "prices/";
         $priceHeader = "code;value;count;currency\n";
         $priceCSV = "";
 
         $this->checkFolder($priceSerialPath);
 
         /** @var string $imageSerialPath | Путь к файлу изображений серии */
-        $imageSerialPath = $container->getParameter('inventory_generator_images_directory');
+        $imageSerialPath = $container->getParameter('inventory_generator_directory') . "images/";
         $imageHeader = "code;code_id;image_path\n";
         $imageCSV = "";
 
         $this->checkFolder($imageSerialPath);
 
         /** @var string $modelSerialPath | Путь к файлу моделей серии */
-        $modelSerialPath = $container->getParameter('inventory_generator_models_directory');
+        $modelSerialPath = $container->getParameter('inventory_generator_directory') . "models/";
         $modelHeader = "code;code_id;model_path\n";
         $modelCSV = "";
 
