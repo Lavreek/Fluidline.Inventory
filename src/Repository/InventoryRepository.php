@@ -6,6 +6,8 @@ use App\Entity\Inventory;
 use App\Entity\InventoryParamhouse;
 use App\Service\QueueBuilder;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -23,6 +25,31 @@ class InventoryRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Inventory::class);
+    }
+
+    /**
+     * @return Inventory[]|null Returns an array of Inventory objects
+     */
+    public function getSerialExist(string $type, string $serial) : array|bool|null
+    {
+        try {
+            return $this->createQueryBuilder('i')
+                ->distinct()
+                ->select("i.serial", "i.type")
+                ->where("i.serial = :serial")
+                ->andWhere("i.type = :type")
+                ->setParameter('serial', $serial)
+                ->setParameter('type', $type)
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getSingleResult();
+
+        } catch (NoResultException) {
+            return false;
+
+        } catch (NonUniqueResultException) {
+            return null;
+        }
     }
 
     /**

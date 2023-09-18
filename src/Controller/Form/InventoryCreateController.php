@@ -17,12 +17,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryCreateController extends AbstractController
 {
-    private string $inputDirectory;
-
-    public function __construct($inputDirectory)
-    {
-        $this->inputDirectory = $inputDirectory;
-    }
+    private string $uploadDirectory;
+    private string $logfileDirectory;
 
     #[Route('/constructor/create', name: 'app_constructor_create')]
     public function createInventory(Request $request, EntityManagerInterface $manager) : JsonResponse|RedirectResponse
@@ -33,6 +29,9 @@ class InventoryCreateController extends AbstractController
         $inventory_form->handleRequest($request);
 
         if ($inventory_form->isSubmitted() && $inventory_form->isValid()) {
+            $this->setUploadDirectory($this->getParameter('inventory_upload_directory'));
+            $this->setLogfileDirectory($this->getParameter('inventory_memory_usage'));
+
             $form_data = $inventory_form->getData();
 
             /** @var UploadedFile $inventory_file */
@@ -45,17 +44,19 @@ class InventoryCreateController extends AbstractController
             $inventory_serial = $form_data['inventory_serial'];
 
             $reader = new FileReader();
+            $reader->setReadDirectory($this->getUploadDirectory());
             $reader->setFile($inventory_file);
-            $reader->setReadDirectory($this->getInputDirectory());
             $reader->saveFile();
 
             $products = $reader->executeCreate();
 
+            $logFile = $this->getLogfileDirectory();
+
             $puller = new EntityPuller();
+            $puller->setLogfilePath(dirname($logFile));
             $puller->pullEntities($inventory_type, $inventory_serial, $products);
 
             try {
-                $manager->beginTransaction();
                 /** @var InventoryRepository $inventoryRepository */
                 $inventoryRepository = $manager->getRepository(Inventory::class);
                 $inventoryRepository->removeBySerialType($inventory_serial, $inventory_type);
@@ -71,10 +72,8 @@ class InventoryCreateController extends AbstractController
                     $chunkCount++;
                 }
 
-                $manager->commit();
-
                 /** @var string $imageSerialPath | Путь к файлу изображений серии */
-                $priceSerialPath = $this->getParameter('inventory_generator_prices_directory');
+                $priceSerialPath = $this->getParameter('inventory_generator_directory') . "prices/";
 
                 $priceFile = $priceSerialPath . $inventory_serial . ".csv";
                 if (file_exists($priceFile)) {
@@ -82,7 +81,7 @@ class InventoryCreateController extends AbstractController
                 }
 
                 /** @var string $imageSerialPath | Путь к файлу изображений серии */
-                $imageSerialPath = $this->getParameter('inventory_generator_images_directory');
+                $imageSerialPath = $this->getParameter('inventory_generator_directory') . "images/";
 
                 $imageFile = $imageSerialPath . $inventory_serial . ".csv";
                 if (file_exists($imageFile)) {
@@ -90,7 +89,7 @@ class InventoryCreateController extends AbstractController
                 }
 
                 /** @var string $modelSerialPath | Путь к файлу моделей серии */
-                $modelSerialPath = $this->getParameter('inventory_generator_models_directory');
+                $modelSerialPath = $this->getParameter('inventory_generator_directory') . "models/";
 
                 $modelFile = $modelSerialPath . $inventory_serial . ".csv";
                 if (file_exists($modelFile)) {
@@ -99,9 +98,7 @@ class InventoryCreateController extends AbstractController
 
                 register_shutdown_function([$this, 'inventoryRemains'], $chunkCount);
 
-            } catch (\Exception | \Throwable $exception) {
-                $manager->rollback();
-            }
+            } catch (\Exception | \Throwable) { }
 
             return $this->redirectToRoute('app_home');
         }
@@ -109,15 +106,9 @@ class InventoryCreateController extends AbstractController
         return new JsonResponse(['Форма не прошла валидацию в системе']);
     }
 
-    private function getInputDirectory()
-    {
-        return $this->inputDirectory;
-    }
-
     private function serializeProducts($products, $serial, $filename) : void
     {
         $serializePath = $this->getParameter('inventory_serialize_directory');
-
         $serialSerializePath =  $serializePath . "/" . $serial . "/";
 
         if (!is_dir($serialSerializePath)) {
@@ -129,12 +120,32 @@ class InventoryCreateController extends AbstractController
 
     private function inventoryRemains($count)
     {
-        $logFile = $this->getParameter('inventory_memory_usage');
+        $logFile = $this->getLogfileDirectory();
 
         file_put_contents($logFile,
             "\n Inventory Remains:" .
             "\n\t Memory at end: ". memory_get_usage() .
             "\n\t Chunks added: $count\n"
         );
+    }
+
+    private function getUploadDirectory() : string
+    {
+        return $this->uploadDirectory;
+    }
+
+    private function setUploadDirectory($path) : void
+    {
+        $this->uploadDirectory = $path;
+    }
+
+    private function getLogfileDirectory() : string
+    {
+        return $this->logfileDirectory;
+    }
+
+    private function setLogfileDirectory($path) : void
+    {
+        $this->logfileDirectory = $path;
     }
 }

@@ -1,0 +1,3 @@
+[submodule "public/products"]
+	path = public/products
+	url = https://github.com/Lavreek/Fluidline.InventoryProducts.git

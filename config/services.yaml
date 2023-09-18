@@ -4,14 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    inventory_input_directory: '%kernel.project_dir%/public/uploads/input/'
-
+    inventory_upload_directory: '%kernel.project_dir%/public/uploads/'
     inventory_serialize_directory: '%kernel.project_dir%/public/serialize/'
     inventory_serialize_update_directory: '%kernel.project_dir%/public/serialize-update/'
-
-    inventory_generator_images_directory: '%kernel.project_dir%/public/generator/images/'
-    inventory_generator_models_directory: '%kernel.project_dir%/public/generator/models/'
-    inventory_generator_prices_directory: '%kernel.project_dir%/public/generator/prices/'
+    inventory_generator_directory: '%kernel.project_dir%/public/generator/'
+    inventory_crawler_directory: '%kernel.project_dir%/public/products/'
 
     inventory_memory_usage: '%kernel.project_dir%/var/log/memory-usage.log'
     inventory_cron_execute: '%kernel.project_dir%/var/log/cron-memory-usage.log'
@@ -30,10 +27,6 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
-
-    App\Controller\Form\InventoryCreateController:
-        arguments:
-            $inputDirectory: '%inventory_input_directory%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

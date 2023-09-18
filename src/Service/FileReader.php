@@ -17,7 +17,7 @@ class FileReader
 
     private string $readDirectory;
 
-    private UploadedFile $file;
+    private UploadedFile|string $file;
 
     public function setReadDirectory($readDirectory) : void
     {
@@ -29,7 +29,7 @@ class FileReader
         $this->file = $file;
     }
 
-    public function getFile() : UploadedFile
+    public function getFile() : UploadedFile|string
     {
         return $this->file;
     }
@@ -211,7 +211,14 @@ class FileReader
     {
         $directory = $this->getReadDirectory();
 
-        $file = fopen($directory . $this->getFile()->getClientOriginalName(), 'r');
+        $filename = $this->getFile();
+
+        if (gettype($filename) === 'string') {
+            $file = fopen($directory . $filename, 'r');
+
+        } else {
+            $file = fopen($directory . $filename->getClientOriginalName(), 'r');
+        }
 
         $this->getParameters(
             $this->getCSVValues($file)

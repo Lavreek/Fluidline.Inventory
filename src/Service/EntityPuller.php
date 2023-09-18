@@ -10,6 +10,8 @@ class EntityPuller
 {
     private string $memory = "";
 
+    private string $logpath = "";
+
     private function setMemory($value)
     {
         $this->memory .= date("Y-m-d H:i:s") . " - " . $value . " \n";
@@ -42,9 +44,23 @@ class EntityPuller
         return $inventory;
     }
 
+    public function setLogfilePath($path) : void
+    {
+        $this->logpath = $path;
+    }
+
+    public function getLogfilePath() : string
+    {
+        return $this->logpath;
+    }
+
     private function logMemoryData()
     {
-        file_put_contents(__DIR__ . "/memory.log", $this->memory);
+        $path = $this->getLogfilePath();
+
+        if (!is_null($path)) {
+            file_put_contents($path ."/memory.log", $this->memory);
+        }
     }
 
     public function pullEntities(string $type, string $serial, array &$entities)
