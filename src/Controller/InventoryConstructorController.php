@@ -23,7 +23,7 @@ class InventoryConstructorController extends AbstractController
 
         $inventory_form = $this->createForm(InventoryInputType::class);
 
-        return $this->render('inventory_constructor/index.html.twig', [
+        return $this->render('inventory/constructor/index.html.twig', [
             'inventory_form' => $inventory_form->createView(),
             'controller_name' => 'InventoryConstructorController',
         ]);
@@ -41,7 +41,7 @@ class InventoryConstructorController extends AbstractController
 
         $inventory_form = $this->createForm(InventoryPricesType::class);
 
-        return $this->render('inventory_constructor/index.html.twig', [
+        return $this->render('inventory/constructor/index.html.twig', [
             'inventory_form' => $inventory_form->createView(),
             'controller_name' => 'InventoryConstructorController',
         ]);

@@ -27,7 +27,7 @@ class InventoryRemoverController extends AbstractController
             $inventoryRepository->removeBySerialType($formData['serial'], $formData['type']);
         }
 
-        return $this->render('inventory_remover/index.html.twig', [
+        return $this->render('inventory/remover/index.html.twig', [
             'remove_form' => $removeForm->createView(),
         ]);
     }

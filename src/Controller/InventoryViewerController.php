@@ -21,7 +21,7 @@ class InventoryViewerController extends AbstractController
 
         $serials = $inventoryRepository->distinctSerial();
 
-        return $this->render('inventory_viewer/index.html.twig', [
+        return $this->render('inventory/viewer/index.html.twig', [
             'serials' => $serials,
         ]);
     }
@@ -40,7 +40,7 @@ class InventoryViewerController extends AbstractController
             $productsTable[] = json_decode(Serializer::serializeElement($product), true);
         }
 
-        return $this->render('inventory_viewer/products.html.twig', [
+        return $this->render('inventory/viewer/products.html.twig', [
             'serial' => $serial,
             'products' => $productsTable,
         ]);

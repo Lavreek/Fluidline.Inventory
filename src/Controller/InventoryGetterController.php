@@ -88,9 +88,7 @@ class InventoryGetterController extends AbstractController
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $manager->getRepository(Inventory::class);
 
-        $filter = $inventoryRepository->getSerialFilter($serial);
-
-        return $filter;
+        return $inventoryRepository->getSerialFilter($serial);
     }
 
     private function prepareRequest($inventory, &$filter) : array

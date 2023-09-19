@@ -93,7 +93,7 @@ class InventoryGeneratorController extends AbstractController
             );
         }
 
-        return $this->render('inventory_generator/index.html.twig', [
+        return $this->render('inventory/generator/index.html.twig', [
             'generate_form' => $form->createView(),
             'files' => $generatedFiles,
         ]);

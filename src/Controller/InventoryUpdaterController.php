@@ -16,7 +16,7 @@ class InventoryUpdaterController extends AbstractController
     #[Route('/update/full/price', name: 'app_update_full_price')]
     public function updateFullPrice(): Response
     {
-        return $this->render('inventory_updater/index.html.twig', [
+        return $this->render('inventory/updater/index.html.twig', [
             'controller_name' => 'InventoryUpdaterController',
         ]);
     }
@@ -24,7 +24,7 @@ class InventoryUpdaterController extends AbstractController
     #[Route('/update/{serial}/price', name: 'app_update_serial_price')]
     public function updateSerialPrice($serial): Response
     {
-        return $this->render('inventory_updater/index.html.twig', [
+        return $this->render('inventory/updater/index.html.twig', [
             'type' => 'Цен',
             'serial' => $serial,
         ]);
@@ -33,7 +33,7 @@ class InventoryUpdaterController extends AbstractController
     #[Route('/update/full/model', name: 'app_update_full_model')]
     public function updateFullModel(): Response
     {
-        return $this->render('inventory_updater/index.html.twig', [
+        return $this->render('inventory/updater/index.html.twig', [
             'controller_name' => 'InventoryUpdaterController',
         ]);
     }
@@ -41,7 +41,7 @@ class InventoryUpdaterController extends AbstractController
     #[Route('/update/{serial}/model', name: 'app_update_serial_model')]
     public function updateSerialModel($serial): Response
     {
-        return $this->render('inventory_updater/index.html.twig', [
+        return $this->render('inventory/updater/index.html.twig', [
             'type' => 'Моделей',
             'serial' => $serial,
         ]);
@@ -50,7 +50,7 @@ class InventoryUpdaterController extends AbstractController
     #[Route('/update/full/image', name: 'app_update_full_image')]
     public function updateFullImage(): Response
     {
-        return $this->render('inventory_updater/index.html.twig', [
+        return $this->render('inventory/updater/index.html.twig', [
             'controller_name' => 'InventoryUpdaterController',
         ]);
     }
@@ -79,7 +79,7 @@ class InventoryUpdaterController extends AbstractController
             file_put_contents($updatePath . $serial . "/update_image_path.csv", $entitiesContent);
         }
 
-        return $this->render('inventory_updater/serial.html.twig', [
+        return $this->render('inventory/updater/serial.html.twig', [
             'type' => 'Изображений',
             'serial' => $serial,
             'serial_form' => $imageForm,
