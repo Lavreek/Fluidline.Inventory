@@ -39,7 +39,6 @@ class InventoryGetterController extends AbstractController
     public function getOrderedSerial($serial, Request $request, ManagerRegistry $registry): JsonResponse
     {
         $requestData = $request->request->all();
-        $limit = 100;
 
         if (isset($requestData['order'])) {
             $order = $requestData['order'];

@@ -133,7 +133,7 @@ class PersistInventoryCommand extends Command
                         $pricehouse->setCode($code);
                         $pricehouse->setCurrency('$');
 
-                        $priceCSV .= $code->getCode() .";0;0;$\n";
+                        $priceCSV .= $code->getCode() .";{$pricehouse->getValue()};{$pricehouse->getWarehouse()};{$pricehouse->getCurrency()}\n";
 
                         if (!file_exists($imageSerialPath . $serial . ".csv")) {
                             touch($imageSerialPath . $serial . ".csv");
@@ -146,11 +146,11 @@ class PersistInventoryCommand extends Command
                         }
 
                         $attachmenthouse = new InventoryAttachmenthouse();
-                        $attachmenthouse->setImage("");
-                        $imageCSV .= $code->getCode() .";". $code->getId() .";\n";
+                        $attachmenthouse->setImage("/assets/reborn/inventory/default.png");
+                        $imageCSV .= $code->getCode() .";". $code->getId() .";{$attachmenthouse->getImage()}\n";
 
                         $attachmenthouse->setModel("");
-                        $modelCSV .= $code->getCode() .";". $code->getId() .";\n";
+                        $modelCSV .= $code->getCode() .";". $code->getId() .";{$attachmenthouse->getModel()}\n";
 
                         $attachmenthouse->setCode($code);
 
@@ -189,24 +189,6 @@ class PersistInventoryCommand extends Command
                 FILE_APPEND
             );
         }
-
-        return Command::SUCCESS;
-    }
-
-    protected function executeBase(InputInterface $input, OutputInterface $output) : int
-    {
-        $io = new SymfonyStyle($input, $output);
-        $arg1 = $input->getArgument('arg1');
-
-        if ($arg1) {
-            $io->note(sprintf('You passed an argument: %s', $arg1));
-        }
-
-        if ($input->getOption('option1')) {
-            // ...
-        }
-
-        $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
 
         return Command::SUCCESS;
     }

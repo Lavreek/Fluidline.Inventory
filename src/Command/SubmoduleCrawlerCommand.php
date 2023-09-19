@@ -165,22 +165,4 @@ final class SubmoduleCrawlerCommand extends Command
 
         file_put_contents($serialSerializePath . $filename . ".serial", serialize($products));
     }
-
-    protected function executeBase(InputInterface $input, OutputInterface $output): int
-    {
-        $io = new SymfonyStyle($input, $output);
-        $arg1 = $input->getArgument('arg1');
-
-        if ($arg1) {
-            $io->note(sprintf('You passed an argument: %s', $arg1));
-        }
-
-        if ($input->getOption('option1')) {
-            // ...
-        }
-
-        $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
-
-        return Command::SUCCESS;
-    }
 }

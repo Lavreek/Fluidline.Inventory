@@ -32,6 +32,17 @@ class InventoryRemoverController extends AbstractController
         ]);
     }
 
+    #[Route('/remove/{type}/{serial}', name: 'app_remove_by_type_serial')]
+    public function byTypeSerial($type, $serial, ManagerRegistry $registry): Response
+    {
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $registry->getRepository(Inventory::class);
+        $inventoryRepository->removeBySerialType($serial, $type);
+
+        return $this->redirectToRoute('app_view_serial');
+    }
+
+
 //    #[Route('/inventory/remover', name: 'app_inventory_remover')]
 //    public function index(): Response
 //    {
