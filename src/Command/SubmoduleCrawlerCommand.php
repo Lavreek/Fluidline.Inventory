@@ -71,7 +71,9 @@ final class SubmoduleCrawlerCommand extends Command
 
                 if (count($serials) > 0) {
                     foreach ($serials as $serial) {
-                        $pathinfo = pathinfo($serial);
+                        $serial_file = $serial;
+                        $pathinfo = pathinfo($serial_file);
+                        $serial = $pathinfo['filename'];
 
                         if (is_dir($serializedPath . $pathinfo['filename'])) {
                             continue;
@@ -96,7 +98,7 @@ final class SubmoduleCrawlerCommand extends Command
                                     $this->serializeProducts(
                                         $chunk,
                                         $pathinfo['filename'],
-                                        "chunk-". $chunkIndex ."-". $serial
+                                        "chunk-". $chunkIndex ."-". $serial_file
                                     );
 
                                     $chunkCount++;
