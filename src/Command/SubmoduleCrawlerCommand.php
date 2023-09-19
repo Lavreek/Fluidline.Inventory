@@ -84,7 +84,7 @@ final class SubmoduleCrawlerCommand extends Command
                         if ($exist === false) {
                             $reader = new FileReader();
                             $reader->setReadDirectory($productsInventoryPath);
-                            $reader->setFile($type . "/" . $serial);
+                            $reader->setFile($type . "/" . $serial_file);
                             $products = $reader->executeCreate();
 
                             $puller = new EntityPuller();
