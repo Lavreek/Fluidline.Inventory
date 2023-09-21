@@ -108,10 +108,19 @@ class PersistInventoryCommand extends Command
             echo "\n Using: $serial directory. \n";
 
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
+                /** @var InventoryRepository $inventory */
+                $inventory = $entityManager->getRepository(Inventory::class);
+
                 /** @var Inventory[] $serializeData */
                 $serializeData = unserialize(stream_get_contents($f));
 
+                $type = "";
+
                 for ($i = 0; $i < count($serializeData); $i++) {
+                    if (empty($type)) {
+                        $type = $serializeData[$i]->getType();
+                    }
+
                     $entityManager->persist($serializeData[$i]);
                 }
 
@@ -124,13 +133,14 @@ class PersistInventoryCommand extends Command
                 } catch (\Exception | \Throwable $exception) {
                     echo "\n Throw exception in $serial \n\t Exception message: {$exception->getMessage()}\n\t By file $filename.\n";
 
+                    $inventory->removeBySerialType($serial, $type);
+
                     fclose($f);
 
                     return Command::FAILURE;
                 }
 
                 for ($i = 0; $i < count($serializeData); $i++) {
-                    $inventory = $entityManager->getRepository(Inventory::class);
                     /** @var Inventory $code */
                     $code = $inventory->findOneBy(['code' => $serializeData[$i]->getCode()]);
 
