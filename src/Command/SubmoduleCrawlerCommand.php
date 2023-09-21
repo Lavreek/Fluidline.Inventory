@@ -79,6 +79,8 @@ final class SubmoduleCrawlerCommand extends Command
                             continue;
                         }
 
+                        echo "\n Using: $serial file. \n";
+
                         $exist = $inventoryRepository->getSerialExist($type, $serial);
 
                         if ($exist === false) {

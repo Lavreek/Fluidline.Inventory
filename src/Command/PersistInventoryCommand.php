@@ -105,6 +105,8 @@ class PersistInventoryCommand extends Command
 
             $f = fopen($filename, 'r');
 
+            echo "\n Using: $serial directory. \n";
+
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
                 /** @var Inventory[] $serializeData */
                 $serializeData = unserialize(stream_get_contents($f));
@@ -159,13 +161,20 @@ class PersistInventoryCommand extends Command
                     }
                 }
 
-                $entityManager->flush();
+                try {
+                    $entityManager->flush();
 
-                $this->writeToFile($priceSerialPath . $serial . ".csv", $priceCSV);
-                $this->writeToFile($imageSerialPath . $serial . ".csv", $imageCSV);
-                $this->writeToFile($modelSerialPath . $serial . ".csv", $modelCSV);
+                    $this->writeToFile($priceSerialPath . $serial . ".csv", $priceCSV);
+                    $this->writeToFile($imageSerialPath . $serial . ".csv", $imageCSV);
+                    $this->writeToFile($modelSerialPath . $serial . ".csv", $modelCSV);
 
-                $entityManager->clear();
+                    $entityManager->clear();
+
+                } catch (\Exception | \Throwable) {
+                    fclose($f);
+
+                    return Command::FAILURE;
+                }
 
                 fclose($f);
 
