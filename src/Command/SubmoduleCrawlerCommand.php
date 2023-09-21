@@ -76,6 +76,7 @@ final class SubmoduleCrawlerCommand extends Command
                         $serial = $pathinfo['filename'];
 
                         if (is_dir($serializedPath . $pathinfo['filename'])) {
+                            echo "\n In queue found $serial file. \n";
                             continue;
                         }
 

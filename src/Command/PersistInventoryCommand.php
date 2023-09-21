@@ -115,8 +115,18 @@ class PersistInventoryCommand extends Command
                     $entityManager->persist($serializeData[$i]);
                 }
 
-                $entityManager->flush();
-                $entityManager->clear();
+                try {
+                    $entityManager->flush();
+                    echo "\n In $serial \n";
+
+                    $entityManager->clear();
+
+                } catch (\Exception | \Throwable) {
+                    echo "\n Throw exception in $serial \n\t By file $filename.\n";
+                    fclose($f);
+
+                    return Command::FAILURE;
+                }
 
                 for ($i = 0; $i < count($serializeData); $i++) {
                     $inventory = $entityManager->getRepository(Inventory::class);
@@ -163,13 +173,13 @@ class PersistInventoryCommand extends Command
 
                 try {
                     $entityManager->flush();
+                    echo "\n In $serial - attachments \n\t File $filename added.\n";
 
                     $this->writeToFile($priceSerialPath . $serial . ".csv", $priceCSV);
                     $this->writeToFile($imageSerialPath . $serial . ".csv", $imageCSV);
                     $this->writeToFile($modelSerialPath . $serial . ".csv", $modelCSV);
 
                     $entityManager->clear();
-
                 } catch (\Exception | \Throwable) {
                     fclose($f);
 
