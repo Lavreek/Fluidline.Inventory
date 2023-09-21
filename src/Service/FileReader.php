@@ -82,7 +82,9 @@ class FileReader
 
                             if (isset($naming[$key])) {
                                 foreach ($naming[$key] as $itemKey => $item) {
-                                    $description[$itemKey] = $naming[$key][$itemKey][$i];
+                                    if (isset($naming[$key][$itemKey][$i])) {
+                                        $description[$itemKey] = $naming[$key][$itemKey][$i];
+                                    }
                                 }
                             }
 
@@ -120,7 +122,9 @@ class FileReader
 
                         if (isset($naming[$key])) {
                             foreach ($naming[$key] as $itemKey => $item) {
-                                $description[$itemKey] = $naming[$key][$itemKey][$i];
+                                if (isset($naming[$key][$itemKey][$i])) {
+                                    $description[$itemKey] = $naming[$key][$itemKey][$i];
+                                }
                             }
                         }
 
