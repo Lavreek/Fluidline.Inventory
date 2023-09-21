@@ -79,11 +79,13 @@ final class SubmoduleCrawlerCommand extends Command
                             continue;
                         }
 
-                        echo "\n Using: $serial file. \n";
+                        echo "\n Enter: $serial file. \n";
 
                         $exist = $inventoryRepository->getSerialExist($type, $serial);
 
                         if ($exist === false) {
+                            echo "\n Using: $serial file. \n";
+
                             $reader = new FileReader();
                             $reader->setReadDirectory($productsInventoryPath);
                             $reader->setFile($type . "/" . $serial_file);
@@ -105,7 +107,9 @@ final class SubmoduleCrawlerCommand extends Command
 
                                     $chunkCount++;
                                 }
-                            } catch (\Exception | \Throwable) { }
+                            } catch (\Exception | \Throwable) {
+                                echo "\n Serialize error in $serial file \n";
+                            }
 
                             file_put_contents(
                                 $this->getCronLogfile(),
@@ -115,6 +119,8 @@ final class SubmoduleCrawlerCommand extends Command
                                 ". Memory peak: ". memory_get_peak_usage() .".\n",
                                 FILE_APPEND
                             );
+
+                            echo "\n $serial added. \n";
 
                             return Command::SUCCESS;
                         }
