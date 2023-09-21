@@ -117,12 +117,13 @@ class PersistInventoryCommand extends Command
 
                 try {
                     $entityManager->flush();
-                    echo "\n In $serial \n";
+                    echo "\n In $serial entities added. \n";
 
                     $entityManager->clear();
 
-                } catch (\Exception | \Throwable) {
-                    echo "\n Throw exception in $serial \n\t By file $filename.\n";
+                } catch (\Exception | \Throwable $exception) {
+                    echo "\n Throw exception in $serial \n\t Exception message: {$exception->getMessage()}\n\t By file $filename.\n";
+
                     fclose($f);
 
                     return Command::FAILURE;
