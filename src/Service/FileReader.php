@@ -17,7 +17,19 @@ class FileReader
 
     private string $readDirectory;
 
+    private string $fileDelimiter;
+
     private UploadedFile|string $file;
+
+    public function setFileDelimiter($delimiter) : void
+    {
+        $this->fileDelimiter = $delimiter;
+    }
+
+    public function getFileDelimiter() : string
+    {
+        return $this->fileDelimiter;
+    }
 
     public function setReadDirectory($readDirectory) : void
     {
@@ -155,7 +167,26 @@ class FileReader
 
         $header = $position = $values = [];
 
-        while ($data = fgetcsv($filepath, separator: ';')) {
+        $delimiter = false;
+        $tries = 0;
+        while (!$delimiter) {
+            $prev = stream_get_contents($filepath,1);
+
+            if ($prev == '#') {
+                $delimiter = stream_get_contents($filepath,1);
+                $this->setFileDelimiter($delimiter);
+            }
+
+            if ($tries > 10) {
+                return [];
+            }
+
+            $tries++;
+        }
+
+        rewind($filepath);
+
+        while ($data = fgetcsv($filepath, separator: $this->getFileDelimiter())) {
             if (!preg_match('#\##', $data[0]) and $row === 0) {
                 throw new \Exception("\n\n\tFirst column must be empty with heading \"#\"\n\n");
             }
