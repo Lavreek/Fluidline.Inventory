@@ -1,5 +1,11 @@
 /.idea
 
+/public/serialize/*
+!/public/serialize/.gitignore
+
+/public/serialize-update/
+!/public/serialize-update/.gitignore
+
 /public/products/*
 
 ###> symfony/framework-bundle ###
