@@ -70,7 +70,7 @@ if (count($a) > 0) {
                 $execMessage = "\n". implode("\n", $output) ."\n";
 
                 if ($commandResult === 1) {
-                    throw new Exception("\nRunning command throw error in output". $execMessage);
+                    die("\nRunning command throw error in output". $execMessage);
                 }
 
                 if (is_array($output)) {

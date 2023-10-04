@@ -76,16 +76,16 @@ final class SubmoduleCrawlerCommand extends Command
                         $serial = $pathinfo['filename'];
 
                         if (is_dir($serializedPath . $pathinfo['filename'])) {
-                            echo "\n In queue found $serial file. \n";
+                            echo "\nIn queue found $serial file.";
                             continue;
                         }
 
-                        echo "\n Check: serial $serial exist. \n";
+                        echo "\nCheck: serial $serial exist.";
 
                         $exist = $inventoryRepository->getSerialExist($type, $serial);
 
                         if ($exist === false) {
-                            echo "\n Enter serial $serial\nUsing: $serial file. \n";
+                            echo "\nEnter serial $serial\nUsing: $serial file.";
 
                             $reader = new FileReader();
                             $reader->setReadDirectory($productsInventoryPath);
@@ -109,20 +109,21 @@ final class SubmoduleCrawlerCommand extends Command
                                     $chunkCount++;
                                 }
                             } catch (\Exception | \Throwable) {
-                                echo "\n Serialize error in $serial file \n";
+                                echo "\n Serialize error in $serial file";
                                 return Command::FAILURE;
                             }
 
                             file_put_contents(
                                 $this->getCronLogfile(),
                                 "\n ". date('d-m-Y H:i:s') .
-                                "\n Serial: $serial".
-                                "\n\tStart with : $memoryUsage. Rise in: ". memory_get_usage() - $memoryUsage .
-                                ". Memory peak: ". memory_get_peak_usage() .".\n",
+                                "\nSerial: $serial".
+                                "\n\tStart with : $memoryUsage".
+                                "\n\tRise in: ". memory_get_usage() - $memoryUsage .
+                                "\n\tMemory peak: ". memory_get_peak_usage(),
                                 FILE_APPEND
                             );
 
-                            echo "\n $serial added. \n";
+                            echo "\n$serial added.";
 
                             return Command::SUCCESS;
                         }
@@ -130,6 +131,8 @@ final class SubmoduleCrawlerCommand extends Command
                 }
             }
         }
+
+        echo "\nSerials to adding in queue is not exist.";
 
         return Command::FAILURE;
     }
