@@ -66,13 +66,15 @@ if (count($a) > 0) {
                 $command = $PHPCli ." \"". ROOT ."bin/console\" SubmoduleCrawler";
                 exec($command, $output, $commandResult);
 
+                $execMessage = "\n". implode("\n", $output) ."\n";
+
                 if ($commandResult === 1) {
-                    throw new Exception("\nRunning command throw error in output");
+                    throw new Exception("\nRunning command throw error in output". $execMessage);
                 }
 
                 if (is_array($output)) {
                     if (count($output) > 0) {
-                        echo "\n". implode("\n", $output);
+                        echo $execMessage;
                     }
                 }
             }

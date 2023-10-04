@@ -80,12 +80,12 @@ final class SubmoduleCrawlerCommand extends Command
                             continue;
                         }
 
-                        echo "\n Enter: $serial file. \n";
+                        echo "\n Check: serial $serial exist. \n";
 
                         $exist = $inventoryRepository->getSerialExist($type, $serial);
 
                         if ($exist === false) {
-                            echo "\n Using: $serial file. \n";
+                            echo "\n Enter serial $serial\nUsing: $serial file. \n";
 
                             $reader = new FileReader();
                             $reader->setReadDirectory($productsInventoryPath);
@@ -110,6 +110,7 @@ final class SubmoduleCrawlerCommand extends Command
                                 }
                             } catch (\Exception | \Throwable) {
                                 echo "\n Serialize error in $serial file \n";
+                                return Command::FAILURE;
                             }
 
                             file_put_contents(
