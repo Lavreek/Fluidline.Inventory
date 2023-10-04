@@ -97,17 +97,27 @@ class PersistInventoryCommand extends Command
         $serializeSerials = array_diff(scandir($serializePath), ['..', '.', '.gitignore']);
 
         if (count($serializeSerials) > 0) {
-            $serial = array_shift($serializeSerials);
+            $serialPathCut = array_shift($serializeSerials);
 
-            $serializeSerialsPath = $serializePath . $serial . "/";
+            $serializeSerialsPath = $serializePath . $serialPathCut ."/";
             $filesInThere = array_diff(scandir($serializeSerialsPath), ['..', '.']);
             $filename = $serializeSerialsPath . array_shift($filesInThere);
 
             $f = fopen($filename, 'r');
 
-            echo "\n Using: $serial directory. \n";
+            echo "\nUsing: $serialPathCut directory.";
 
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
+
+                preg_match_all('#(\w+) \[.+\]#u', $serialPathCut, $match);
+
+                if (isset($match[1][0])) {
+                    $serial = $match[1][0];
+                    echo "\nFound parent serial: $serial";
+                } else {
+                    $serial = $serialPathCut;
+                }
+
                 /** @var InventoryRepository $inventory */
                 $inventory = $entityManager->getRepository(Inventory::class);
 

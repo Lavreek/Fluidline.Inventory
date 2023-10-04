@@ -4,11 +4,12 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    inventory_upload_directory: '%kernel.project_dir%/public/uploads/'
     inventory_serialize_directory: '%kernel.project_dir%/public/serialize/'
     inventory_serialize_update_directory: '%kernel.project_dir%/public/serialize-update/'
     inventory_generator_directory: '%kernel.project_dir%/public/generator/'
+
     inventory_crawler_directory: '%kernel.project_dir%/public/products/'
+    inventory_crawler_locks_directory : '%kernel.project_dir%/public/locks/'
 
     inventory_memory_usage: '%kernel.project_dir%/var/log/memory-usage.log'
     inventory_cron_execute: '%kernel.project_dir%/var/log/cron-memory-usage.log'

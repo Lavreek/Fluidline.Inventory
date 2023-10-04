@@ -13,7 +13,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'SubmoduleCrawler',
@@ -22,6 +21,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class SubmoduleCrawlerCommand extends Command
 {
     private string $serializeDirectory;
+
+    private string $lockDirectory;
 
     /** @var string $cronLogfile | Путь к файлу использования памяти для задачи */
     private string $cronLogfile;
@@ -44,6 +45,7 @@ final class SubmoduleCrawlerCommand extends Command
         $container = $this->getApplication()->getKernel()->getContainer();
 
         $this->setSerializeDirectory($container->getParameter('inventory_serialize_directory'));
+        $this->setLockDirectory($container->getParameter('inventory_crawler_locks_directory'));
         $this->setCronLogfile($container->getParameter('inventory_cron_execute'));
 
         /** @var string $crawlerPath | Путь к файлам модуля продукции */
@@ -82,7 +84,11 @@ final class SubmoduleCrawlerCommand extends Command
 
                         echo "\nCheck: serial $serial exist.";
 
-                        $exist = $inventoryRepository->getSerialExist($type, $serial);
+                        $exist = file_exists($this->getLockDirectory() . $serial .".lock");
+
+                        if (!$exist) {
+                            $exist = $inventoryRepository->getSerialExist($type, $serial);
+                        }
 
                         if ($exist === false) {
                             echo "\nEnter serial $serial\nUsing: $serial file.";
@@ -102,7 +108,7 @@ final class SubmoduleCrawlerCommand extends Command
                                 foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {
                                     $this->serializeProducts(
                                         $chunk,
-                                        $pathinfo['filename'],
+                                        $serial,
                                         "chunk-". $chunkIndex ."-". $serial_file
                                     );
 
@@ -125,6 +131,8 @@ final class SubmoduleCrawlerCommand extends Command
 
                             echo "\n$serial added.";
 
+                            touch($this->getLockDirectory() . $serial . ".lock");
+
                             return Command::SUCCESS;
                         }
                     }
@@ -146,9 +154,28 @@ final class SubmoduleCrawlerCommand extends Command
         return true;
     }
 
-    private function setSerializeDirectory($path) : void
+    private function createDirectory(string $path)
+    {
+        if (!is_dir($path)) {
+            mkdir($path, recursive: true);
+        }
+    }
+
+    private function setLockDirectory(string $path) : void
+    {
+        $this->lockDirectory = $path;
+        $this->createDirectory($path);
+    }
+
+    private function getLockDirectory() : string
+    {
+        return $this->lockDirectory;
+    }
+
+    private function setSerializeDirectory(string $path) : void
     {
         $this->serializeDirectory = $path;
+        $this->createDirectory($path);
     }
 
     private function getSerializeDirectory() : string

@@ -1,5 +1,7 @@
 /.idea
 
+/public/locks/*
+
 /public/serialize/*
 !/public/serialize/.gitignore
 
