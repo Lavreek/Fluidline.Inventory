@@ -44,9 +44,9 @@ final class SubmoduleCrawlerCommand extends Command
         /** @var App_KernelDevDebugContainer $container | Контейнер приложения Symfony */
         $container = $this->getApplication()->getKernel()->getContainer();
 
-        $this->setSerializeDirectory($container->getParameter('inventory_serialize_directory'));
+        $this->setSerializeDirectory($container->getParameter('serialize'));
         $this->setLockDirectory($container->getParameter('inventory_crawler_locks_directory'));
-        $this->setCronLogfile($container->getParameter('inventory_cron_execute'));
+        $this->setCronLogfile($container->getParameter('cron'));
 
         /** @var string $crawlerPath | Путь к файлам модуля продукции */
         $crawlerPath = $container->getParameter('inventory_crawler_directory');
