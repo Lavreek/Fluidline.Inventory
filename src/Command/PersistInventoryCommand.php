@@ -8,7 +8,6 @@ use App\Entity\InventoryPricehouse;
 use App\Repository\InventoryRepository;
 use ContainerPx3PnUb\App_KernelDevDebugContainer;
 use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -72,7 +71,7 @@ class PersistInventoryCommand extends Command
         $this->container = $container;
     }
 
-    private function getContainer() : App_KernelDevDebugContainer
+    private function getContainer() : mixed
     {
         return $this->container;
     }
@@ -159,16 +158,15 @@ class PersistInventoryCommand extends Command
 
         /** @var Registry $doctrine Объект doctrine, связь с сущностями базы данных */
         $doctrine = $container->get('doctrine');
-
-        $this->entityManager = $doctrine->getManager();
+        $this->setManager($doctrine->getManager());
     }
 
     private function writeToFile($path, $content) : void
     {
-        $writed = false;
+        $written = false;
 
-        while (!$writed) {
-            $writed = file_put_contents($path, $content, FILE_APPEND);
+        while (!$written) {
+            $written = file_put_contents($path, $content, FILE_APPEND);
         }
     }
 
