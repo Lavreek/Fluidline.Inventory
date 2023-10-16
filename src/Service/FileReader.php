@@ -15,6 +15,10 @@ class FileReader
 
     private array $naming = [];
 
+    private array $conditions = [];
+
+    private array $special = [];
+
     private string $readDirectory;
 
     private string $fileDelimiter;
@@ -67,11 +71,68 @@ class FileReader
         }
     }
 
+    public function getCondition($conditionType, $parameterValue, $neededValue)
+    {
+        switch ($conditionType) {
+            case '==' : {
+                if ($parameterValue == $neededValue) {
+                    return true;
+                }
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    public function checkCondition($productParameters, $conditionSet) : ?bool
+    {
+        unset($conditionSet['result']);
+
+        foreach ($conditionSet as $condition) {
+            preg_match('#(.*)(==|!=|>=|<=)(.*)#u', $condition, $match);
+
+            $check = false;
+
+            foreach ($productParameters as $parameter) {
+                if ($parameter['name'] === $match[1]) {
+                    $check = $this->getCondition($match[2], $parameter['value'], $match[3]);
+                }
+            }
+
+            if ($check) {
+                return true;
+            }
+        }
+
+        return null;
+    }
+
+    private function setDescription($key, $index)
+    {
+        $naming = $this->naming;
+
+        if (isset($naming[$key])) {
+            foreach ($naming[$key] as $itemKey => $item) {
+                if (isset($naming[$key][$itemKey][$index])) {
+                    $description = $naming[$key][$itemKey][$index];
+
+                    if ($description === "-") {
+                        return null;
+                    }
+
+                    return $naming[$key][$itemKey][$index];
+                }
+            }
+        }
+
+        return null;
+    }
+
     private function getParameters($values) : void
     {
         $products = &$this->products;
         $parameters = &$this->parameters;
-        $naming = &$this->naming;
 
         if (current($values)) {
             $key = key($values);
@@ -83,30 +144,18 @@ class FileReader
                 foreach ($products as $product) {
                     for ($i = 0; $i < count($current); $i++) {
                         $productsInterim[] = $product;
+                        $position = count($productsInterim);
 
                         if ($current[$i] !== '-') {
-                            $productsInterim[count($productsInterim) - 1]['code'] =
-                                $productsInterim[count($productsInterim) - 1]['code'] . '-' . $current[$i];
+                            $productsInterim[$position - 1]['code'] =
+                                $productsInterim[$position - 1]['code'] .'-'. $current[$i];
                         }
 
                         if (isset($parameters[$key])) {
-                            $description = [];
-
-                            if (isset($naming[$key])) {
-                                foreach ($naming[$key] as $itemKey => $item) {
-                                    if (isset($naming[$key][$itemKey][$i])) {
-                                        $description[$itemKey] = $naming[$key][$itemKey][$i];
-                                    }
-                                }
-                            }
+                            $description = $this->setDescription($key, $i);
 
                             foreach ($parameters[$key] as $groupKey => $groupValue) {
-                                if (!isset($parameters[$key][$groupKey][$i])) {
-                                    $group = [
-                                        'name' => $groupKey,
-                                        'value' => "",
-                                    ];
-                                } else {
+                                if (isset($parameters[$key][$groupKey][$i])) {
                                     $group = [
                                         'name' => $groupKey,
                                         'value' => trim($parameters[$key][$groupKey][$i], "\""),
@@ -115,9 +164,9 @@ class FileReader
                                     if (isset($description[$groupKey])) {
                                         $group['description'] = $description[$groupKey];
                                     }
-                                }
 
-                                $productsInterim[count($productsInterim) - 1]['parameters'][] = $group;
+                                    $productsInterim[$position - 1]['parameters'][] = $group;
+                                }
                             }
                         }
                     }
@@ -130,15 +179,7 @@ class FileReader
                     $products[$i]['parameters'] = [];
 
                     if (isset($parameters[$key])) {
-                        $description = [];
-
-                        if (isset($naming[$key])) {
-                            foreach ($naming[$key] as $itemKey => $item) {
-                                if (isset($naming[$key][$itemKey][$i])) {
-                                    $description[$itemKey] = $naming[$key][$itemKey][$i];
-                                }
-                            }
-                        }
+                        $description = $this->setDescription($key, $i);
 
                         foreach ($parameters[$key] as $groupKey => $groupValue) {
                             $group = [
@@ -146,8 +187,8 @@ class FileReader
                                 'value' => trim($parameters[$key][$groupKey][$i], "\""),
                             ];
 
-                            if (isset($description[$groupKey])) {
-                                $group['description'] = $description[$groupKey];
+                            if (!is_null($description)) {
+                                $group['description'] = $description;
                             }
 
                             $products[$i]['parameters'][] = $group;
@@ -161,7 +202,7 @@ class FileReader
         }
     }
 
-    private function getCSVValues($filepath) : array
+    private function getCSVValues($file) : array
     {
         $row = 0;
 
@@ -170,10 +211,10 @@ class FileReader
         $delimiter = false;
         $tries = 0;
         while (!$delimiter) {
-            $prev = stream_get_contents($filepath,1);
+            $prev = stream_get_contents($file,1);
 
             if ($prev == '#') {
-                $delimiter = stream_get_contents($filepath,1);
+                $delimiter = stream_get_contents($file,1);
                 $this->setFileDelimiter($delimiter);
             }
 
@@ -184,11 +225,11 @@ class FileReader
             $tries++;
         }
 
-        rewind($filepath);
+        rewind($file);
 
-        while ($data = fgetcsv($filepath, separator: $this->getFileDelimiter())) {
+        while ($data = fgetcsv($file, separator: $this->getFileDelimiter())) {
             if (!preg_match('#\##', $data[0]) and $row === 0) {
-                throw new \Exception("\n\n\tFirst column must be empty with heading \"#\"\n\n");
+                throw new \Exception("\nFirst column must be empty with heading \"#\"\n");
             }
 
             unset($data[0]);
@@ -208,10 +249,19 @@ class FileReader
                     } elseif (preg_match('#Условное обозначение:(.*)#u', $columnData, $match)) {
                         $position['naming'][] = $columnKey;
 
+                    } elseif (preg_match('#Условие:(.*)#u', $columnData, $match)) {
+                        $position['conditions'][] = $columnKey;
+                        $this->conditions[$match[1]] = [];
+
+                    } elseif (preg_match('#Особый параметр:(.*)#u', $columnData, $match)) {
+                        $position['special'][] = $columnKey;
+                        $this->special[$match[1]] = [];
+
                     } else {
                         $values += [$columnData => []];
                         $position['values'][] = $columnKey;
                     }
+
                 }
             } else {
                 foreach ($data as $columnKey => $columnData) {
@@ -231,6 +281,25 @@ class FileReader
                             preg_match('#Условное обозначение:(.*)#u', $header[$columnKey], $match);
                             [$columnName, $columnTarget] = explode(":", $match[1], 2);
                             $this->naming[$columnName][$columnTarget][] = $columnData;
+
+                        }  elseif (in_array($columnKey, $position['conditions'])) {
+                            preg_match('#ЕСЛИ\((.+)\)=\((.+)\)#u', $columnData, $match);
+
+                            $exp = explode(":", $header[$columnKey], 2);
+                            $conditionValue = $exp[1];
+
+                            if (isset($match[0])) {
+                                $conditionsExplode = explode('&', $match[1]);
+
+                                foreach ($conditionsExplode as $exp) {
+                                    $this->conditions[$conditionValue][] = $exp;
+                                }
+
+                                $this->conditions[$conditionValue]['result'] = $match[2];
+                            }
+                        } elseif (in_array($columnKey, $position['special'])) {
+                            preg_match('#Особый параметр:(.*)#u', $header[$columnKey], $match);
+                            $this->special[$match[1]][] = $columnData;
                         }
                     }
                 }
@@ -258,6 +327,21 @@ class FileReader
         $this->getParameters(
             $this->getCSVValues($file)
         );
+
+        // TODO: SPECIAL MODIFICATIONS "$this->special"
+
+        foreach ($this->products as $productsIndex => $productsElement) {
+            foreach ($this->conditions as $conditionKey => $conditionSet) {
+                $condition = $this->checkCondition($productsElement['parameters'], $conditionSet);
+
+                if ($condition) {
+                    $this->products[$productsIndex]['parameters'][] = [
+                        'name' => $conditionKey,
+                        'value' => $conditionSet['result'],
+                    ];
+                }
+            }
+        }
 
         return $this->products;
     }

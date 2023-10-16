@@ -5,16 +5,9 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     serialize: '%kernel.project_dir%/public/serialize/'
-
     products: '%kernel.project_dir%/public/products/'
-
-    inventory_serialize_update_directory: '%kernel.project_dir%/public/serialize-update/'
-
-    inventory_crawler_directory: '%kernel.project_dir%/public/products/'
-    inventory_crawler_locks_directory : '%kernel.project_dir%/public/locks/'
-
-    inventory_memory_usage: '%kernel.project_dir%/var/log/memory-usage.log'
-
+    crawler_locks : '%kernel.project_dir%/public/locks/'
+    memory_usage: '%kernel.project_dir%/var/log/memory-usage.log'
     cron: '%kernel.project_dir%/var/log/cron.log'
 
 services:

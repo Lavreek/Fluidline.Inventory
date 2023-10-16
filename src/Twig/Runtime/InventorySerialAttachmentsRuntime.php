@@ -14,9 +14,9 @@ class InventorySerialAttachmentsRuntime extends AbstractController implements Ru
 
     public function getImageFile(string $serial) : bool
     {
-        $imagePath = $this->getParameter('inventory_generator_directory') ."images/";
+        $imagePath = $this->getParameter('products') ."images/";
 
-        if (file_exists($imagePath . $serial . ".csv")) {
+        if (file_exists($imagePath . $serial .".csv")) {
             return true;
         }
 
@@ -25,9 +25,9 @@ class InventorySerialAttachmentsRuntime extends AbstractController implements Ru
 
     public function getModelFile(string $serial) : bool
     {
-        $modelPath = $this->getParameter('inventory_generator_directory') ."models/";
+        $modelPath = $this->getParameter('products') ."models/";
 
-        if (file_exists($modelPath . $serial . ".csv")) {
+        if (file_exists($modelPath . $serial .".csv")) {
             return true;
         }
 
@@ -36,9 +36,9 @@ class InventorySerialAttachmentsRuntime extends AbstractController implements Ru
 
     public function getPriceFile(string $serial) : bool
     {
-        $pricePath = $this->getParameter('inventory_generator_directory') ."prices/";
+        $pricePath = $this->getParameter('products') ."prices/";
 
-        if (file_exists($pricePath . $serial . ".csv")) {
+        if (file_exists($pricePath . $serial .".csv")) {
             return true;
         }
 

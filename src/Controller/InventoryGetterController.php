@@ -101,9 +101,14 @@ class InventoryGetterController extends AbstractController
             $object = json_decode($serialize, true);
 
             foreach ($object['parameters'] as $parameterIndex => $parameter) {
+                $parameter['name'] = strip_tags($parameter['name']);
+
                 if (!in_array($parameter['name'], $filterOrder)) {
                     $filterOrder[] = $parameter['name'];
                 }
+
+                $object['parameters'][$parameterIndex]['value'] =
+                    strip_tags($object['parameters'][$parameterIndex]['value']);
 
                 unset(
                     $object['parameters'][$parameterIndex]['id'],

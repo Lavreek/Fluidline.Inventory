@@ -250,7 +250,7 @@ class PersistInventoryCommand extends Command
 
                     if (!is_null($code)) {
                         if (!file_exists($prices['path'] . $serial . ".csv")) {
-                            touch($prices['path'] . $serial . ".csv");
+                            touch($prices['path'] . $serial . ".gen");
                             $prices['csv_content'] .= $prices['csv_header'];
                         }
 
@@ -265,12 +265,12 @@ class PersistInventoryCommand extends Command
                         ]) ."\n";
 
                         if (!file_exists($images['path'] . $serial . ".csv")) {
-                            touch($images['path'] . $serial . ".csv");
+                            touch($images['path'] . $serial . ".gen");
                             $images['csv_content'] .= $images['csv_header'];
                         }
 
                         if (!file_exists($models['path'] . $serial . ".csv")) {
-                            touch($models['path'] . $serial . ".csv");
+                            touch($models['path'] . $serial . ".gen");
                             $models['csv_content'] .= $models['csv_header'];
                         }
 
@@ -297,9 +297,9 @@ class PersistInventoryCommand extends Command
                     $entityManager->flush();
                     echo "\nIn $serial - attachments \n\t File $filename added.\n";
 
-                    $this->writeToFile($prices['path'] . $serial . ".csv", $prices['csv_content']);
-                    $this->writeToFile($images['path'] . $serial . ".csv", $images['csv_content']);
-                    $this->writeToFile($models['path'] . $serial . ".csv", $models['csv_content']);
+                    $this->writeToFile($prices['path'] . $serial . ".gen", $prices['csv_content']);
+                    $this->writeToFile($images['path'] . $serial . ".gen", $images['csv_content']);
+                    $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
 
                     $entityManager->clear();
                 } catch (\Exception | \Throwable) {
