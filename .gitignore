@@ -1,13 +1,5 @@
 /.idea
 
-/public/locks/*
-
-/public/serialize/*
-!/public/serialize/.gitignore
-
-/public/serialize-update/
-!/public/serialize-update/.gitignore
-
 /public/products/*
 
 ###> symfony/framework-bundle ###
@@ -30,3 +22,7 @@
 .phpunit.result.cache
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
+
+###> generated files ###
+*.lock
+###< generated files ###

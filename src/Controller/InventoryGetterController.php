@@ -14,10 +14,20 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryGetterController extends AbstractController
 {
+    const query_max_limit = 50;
+
     #[Route('/get/{serial}', name: 'app_get_serial', methods: ['POST'])]
-    public function getSerial($serial, ManagerRegistry $registry): JsonResponse
+    public function getSerial($serial, Request $request, ManagerRegistry $registry): JsonResponse
     {
-        $limit = 100;
+        $limit = 10;
+
+        if ($request->request->get('limit') !== null) {
+            $limit = $request->request->get('limit');
+
+            if ($limit > self::query_max_limit) {
+                $limit = self::query_max_limit;
+            }
+        }
 
         /** @var ObjectManager $manager */
         $manager = $registry->getManager();

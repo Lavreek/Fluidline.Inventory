@@ -2,39 +2,27 @@
 
 namespace App\Command;
 
+use App\Command\Helper\Directory;
 use App\Entity\Inventory;
 use App\Entity\InventoryAttachmenthouse;
 use App\Entity\InventoryPricehouse;
 use App\Repository\InventoryRepository;
-use ContainerPx3PnUb\App_KernelDevDebugContainer;
-use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: 'persistInventory',
+    name: 'Persist',
     description: 'Добавление продукции в систему Inventory',
 )]
 
-class PersistInventoryCommand extends Command
+class PersistCommand extends Command
 {
-    private mixed $container;
+    const max_memory_limit = '1024M';
 
-    /**
-     * @var string $serialize Путь к файлам сериализованным после генерации продукции из файла.
-     */
-    private string $serialize;
-
-    /**
-     * @var string $cron Путь к файлу логирования потребляемой памяти.
-     * По идее скрипт должен вызываться с задачи crontab.
-     */
-    private string $cron;
+    private Directory $directories;
 
     /** @var array $images Объект, который корректирует сериализованные данные.
      * Работает относительно изображений продукции в сериализованных данных
@@ -53,40 +41,9 @@ class PersistInventoryCommand extends Command
 
     private ObjectManager $entityManager;
 
-    public function __construct(string $name = null)
-    {
-        parent::__construct($name);
-    }
-
     protected function configure(): void
     {
-        $this
-            ->addArgument('arg1', InputArgument::OPTIONAL, 'Argument description')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description')
-        ;
-    }
-
-    private function createContainer($container)
-    {
-        $this->container = $container;
-    }
-
-    private function getContainer() : mixed
-    {
-        return $this->container;
-    }
-
-    private function createPath(string $variable, string $parameterName)
-    {
-        $container = $this->getContainer();
-
-        /** Адаптивное присвоение переменным "путь" к директориям */
-        $this->$variable = $container->getParameter($parameterName);
-    }
-
-    private function getPath(string $variable)
-    {
-        return $this->$variable;
+        $this->directories = new Directory();
     }
 
     private function setVariable(string $variable, mixed $value)
@@ -99,12 +56,7 @@ class PersistInventoryCommand extends Command
         return $this->$variable;
     }
 
-    private function getContainerPath(string $path) : string
-    {
-        return $this->getContainer()->getParameter($path);
-    }
-
-    private function setManager(ObjectManager $manager)
+    private function setManager(ObjectManager $manager) : void
     {
         $this->entityManager = $manager;
     }
@@ -114,97 +66,64 @@ class PersistInventoryCommand extends Command
         return $this->entityManager;
     }
 
-    /**
-     * Первоначальная настройка переменных, которые участвуют в процессе добавления продукции
-     *
-     * @return void
-     */
-    private function initialSetup() : void
-    {
-        // Создание рабочего контейнера приложения Symfony для использования функций внутренней обработки
-        $this->createContainer($this->getApplication()->getKernel()->getContainer());
-
-        // Создание пути переменной $serialize
-        $this->createPath('serialize', 'serialize');
-
-        // Создание пути переменной $cron
-        $this->createPath('cron', 'cron');
-
-        // Создание объекта, который определяет назначения для сущности InventoryPricehouse
-        $this->setVariable('prices', [
-            'path' => $this->getContainerPath('products') . "prices/",
-            'csv_header' => "code;value;count;currency\n",
-            'csv_content' => "",
-        ]);
-
-        // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Image)
-        $this->setVariable('images', [
-            'path' => $this->getContainerPath('products') . "images/",
-            'csv_header' => "code;code_id;image_path\n",
-            'csv_content' => "",
-        ]);
-
-        // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Model)
-        $this->setVariable('models', [
-            'path' => $this->getContainerPath('products') . "models/",
-            'csv_header' => "code;code_id;model_path\n",
-            'csv_content' => "",
-        ]);
-    }
-
-    private function initialEntityManager()
-    {
-        $container = $this->getContainer();
-
-        /** @var Registry $doctrine Объект doctrine, связь с сущностями базы данных */
-        $doctrine = $container->get('doctrine');
-        $this->setManager($doctrine->getManager());
-    }
-
     private function writeToFile($path, $content) : void
     {
-        $written = false;
-
-        while (!$written) {
-            $written = file_put_contents($path, $content, FILE_APPEND);
+        if (!$this->directories->checkPath(dirname($path))) {
+            $this->directories->createDirectory(dirname($path));
         }
+
+        if (!file_exists($path)) {
+            touch($path);
+        }
+
+        $f = fopen($path, 'r+');
+        fwrite($f, $content);
+        fclose($f);
+    }
+
+    private function getFiles(string $path) : array
+    {
+        $difference = ['..', '.', '.gitignore'];
+        return array_diff(scandir($path), $difference);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
-        ini_set('memory_limit', '1024M');
-
-        $memoryUsage = memory_get_usage();
+        ini_set('memory_limit', self::max_memory_limit);
+        $executeScriptMemory = memory_get_usage();
+        $executeScriptTime = time();
 
         $this->initialSetup();
-        $this->initialEntityManager();
 
-        $serializePath = $this->getPath('serialize');
+        $serializePath = $this->directories->getSerializePath();
 
-        $entityManager = $this->getManager();
-
-        $serializeSerials = array_diff(scandir($serializePath), ['..', '.', '.gitignore']);
+        $serializeSerials = $this->getFiles($serializePath);
 
         if (count($serializeSerials) > 0) {
-            $serialPathCut = array_shift($serializeSerials);
+            $serialFolder = array_shift($serializeSerials);
 
-            $serializeSerialsPath = $serializePath . $serialPathCut ."/";
-            $filesInThere = array_diff(scandir($serializeSerialsPath), ['..', '.']);
-            $filename = $serializeSerialsPath . array_shift($filesInThere);
+            $serializeSerialsPath = $serializePath . $serialFolder ."/";
+
+            $serialFiles = $this->getFiles($serializeSerialsPath);
+
+            $filename = $serializeSerialsPath . array_shift($serialFiles);
 
             $f = fopen($filename, 'r');
 
-            echo "\nUsing: $serialPathCut directory.";
-
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
-                preg_match_all('#(\w+) \[.+\]#u', $serialPathCut, $match);
+                echo "\nUsing: $serialFolder directory.";
+
+                preg_match_all('#(\w+) \[.+\]#u', $serialFolder, $match);
 
                 if (isset($match[1][0])) {
                     $serial = $match[1][0];
                     echo "\nFound parent serial: $serial";
+
                 } else {
-                    $serial = $serialPathCut;
+                    $serial = $serialFolder;
                 }
+
+                $entityManager = $this->getManager();
 
                 /** @var InventoryRepository $inventory */
                 $inventory = $entityManager->getRepository(Inventory::class);
@@ -212,14 +131,10 @@ class PersistInventoryCommand extends Command
                 /** @var Inventory[] $serializeData */
                 $serializeData = unserialize(stream_get_contents($f));
 
-                $type = "";
-
                 for ($i = 0; $i < count($serializeData); $i++) {
-                    if (empty($type)) {
-                        $type = $serializeData[$i]->getType();
+                    if ($serializeData[$i]->getSerial() != $serial) {
+                        $serializeData[$i]->setSerial($serial);
                     }
-
-                    $serializeData[$i]->setSerial($serial);
 
                     $entityManager->persist($serializeData[$i]);
                 }
@@ -231,9 +146,20 @@ class PersistInventoryCommand extends Command
                     $entityManager->clear();
 
                 } catch (\Exception | \Throwable $exception) {
-                    echo "\n Throw exception in $serial \n\t Exception message: {$exception->getMessage()}\n\t By file $filename.\n";
+                    if (isset($type)) {
+                        $inventory->removeBySerialType($serial, $serializeData[$i]->getType());
+                    }
 
-                    $inventory->removeBySerialType($serial, $type);
+                    $customMessage = "\nFlush error by $serialFolder in $filename\n";
+
+                    file_put_contents(
+                        $this->directories->getLogfilePath(),
+                        "Symfony command: Persist\n".
+                        $customMessage . $exception->getMessage() ."\n",
+                        FILE_APPEND
+                    );
+
+                    echo $customMessage;
 
                     fclose($f);
 
@@ -280,7 +206,6 @@ class PersistInventoryCommand extends Command
                             $code->getCode(), $code->getId(), $attachmenthouse->getImage()
                         ]) ."\n";
 
-
                         $attachmenthouse->setModel("");
                         $models['csv_content'] .= implode(';', [
                             $code->getCode(), $code->getId(), $attachmenthouse->getModel()
@@ -302,8 +227,17 @@ class PersistInventoryCommand extends Command
                     $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
 
                     $entityManager->clear();
-                } catch (\Exception | \Throwable) {
+                } catch (\Exception | \Throwable $exception) {
                     fclose($f);
+
+                    $customMessage = "\nFlush error by $serialFolder in $filename\n";
+
+                    file_put_contents(
+                        $this->directories->getLogfilePath(),
+                        "Symfony command: Persist\n".
+                        $customMessage . $exception->getMessage() ."\n",
+                        FILE_APPEND
+                    );
 
                     return Command::FAILURE;
                 }
@@ -312,18 +246,11 @@ class PersistInventoryCommand extends Command
 
                 unlink($filename);
 
-                if (count($filesInThere) < 1) {
+                if (count($serialFiles) < 1) {
                     rmdir($serializeSerialsPath);
                 }
 
-                file_put_contents(
-                    $this->getPath('cron'),
-                    "\n ". date('d-m-Y H:i:s') .
-                    "\n Serial: $serial".
-                    "\n\tStart with : $memoryUsage. Rise in: ". memory_get_usage() - $memoryUsage .
-                    ". Memory peak: ". memory_get_peak_usage() .".\n",
-                    FILE_APPEND
-                );
+                $this->createLogfileResult($executeScriptTime, $executeScriptMemory);
             }
 
             if ($would_block) {
@@ -331,15 +258,69 @@ class PersistInventoryCommand extends Command
             }
 
             file_put_contents(
-                $this->getPath('cron'),
-                "\n". date('d-m-Y H:i:s') .
-                "\nДругой процесс уже удерживает блокировку файла".
-                "\n\tStart with : $memoryUsage. Rise in: ". memory_get_usage() - $memoryUsage .
-                ". Memory peak: ". memory_get_peak_usage() .".\n",
+                $this->directories->getLogfilePath(),
+                "Symfony command: Persist\n".
+                "Другой процесс уже удерживает блокировку файла\n".
                 FILE_APPEND
             );
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Первоначальная настройка переменных, которые участвуют в процессе добавления продукции
+     * @return void
+     */
+    private function initialSetup() : void
+    {
+        $container = $this->getApplication()->getKernel()->getContainer();
+
+        $this->directories->setProductsPath($container->getParameter('products'));
+
+        $doctrine = $container->get('doctrine');
+        $this->setManager($doctrine->getManager());
+
+        // Создание объекта, который определяет назначения для сущности InventoryPricehouse
+        $this->setVariable('prices', [
+            'path' => $this->directories->getPricePath(),
+            'csv_header' => "code;value;count;currency\n",
+            'csv_content' => "",
+        ]);
+
+        // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Image)
+        $this->setVariable('images', [
+            'path' => $this->directories->getImagePath(),
+            'csv_header' => "code;code_id;image_path\n",
+            'csv_content' => "",
+        ]);
+
+        // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Model)
+        $this->setVariable('models', [
+            'path' => $this->directories->getModelPath(),
+            'csv_header' => "code;code_id;model_path\n",
+            'csv_content' => "",
+        ]);
+    }
+
+    private function createLogfileResult(int $start, int $memory) : void
+    {
+        $currentDate = date('d-m-Y H:i:s');
+        $startDate = date('d-m-Y H:i:s', $start);
+
+        $startMemory = ($memory / 1024) / 1024;
+        $currentMemory = (memory_get_usage() / 1024) / 1024;
+        $riseMemory = $currentMemory - $startMemory;
+        $peakMemory = memory_get_peak_usage();
+
+        file_put_contents(
+            $this->directories->getLogfilePath(),
+            "Symfony command: Persist\n".
+            "Процесс добавления продукции завершён\n".
+            "\tВремя начала: $startDate, Время завершения: $currentDate\n".
+            "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n".
+            "\tПик использования памяти: $peakMemory\n",
+            FILE_APPEND
+        );
     }
 }

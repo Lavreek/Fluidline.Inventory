@@ -4,11 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    serialize: '%kernel.project_dir%/public/serialize/'
+
+    # Заготовки продукции Fluid-line.ru - github.com/Lavreek/Fluidline.InventoryProducts
     products: '%kernel.project_dir%/public/products/'
-    crawler_locks : '%kernel.project_dir%/public/locks/'
-    memory_usage: '%kernel.project_dir%/var/log/memory-usage.log'
-    cron: '%kernel.project_dir%/var/log/cron.log'
 
 services:
     # default configuration for services in *this* file
