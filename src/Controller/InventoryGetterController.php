@@ -14,6 +14,9 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryGetterController extends AbstractController
 {
+    /**
+     * Максимальное возможное количество продуктов в 1 заказ
+     */
     const query_max_limit = 50;
 
     #[Route('/get/{serial}', name: 'app_get_serial', methods: ['POST'])]
@@ -48,6 +51,16 @@ class InventoryGetterController extends AbstractController
     #[Route('/get/ordered/{serial}', name: 'app_get_ordered_serial', methods: ['POST'])]
     public function getOrderedSerial($serial, Request $request, ManagerRegistry $registry): JsonResponse
     {
+        $limit = 10;
+
+        if ($request->request->get('limit') !== null) {
+            $limit = $request->request->get('limit');
+
+            if ($limit > self::query_max_limit) {
+                $limit = self::query_max_limit;
+            }
+        }
+
         $requestData = $request->request->all();
 
         if (isset($requestData['order'])) {
@@ -62,7 +75,7 @@ class InventoryGetterController extends AbstractController
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $manager->getRepository(Inventory::class);
 
-        $inventory = $inventoryRepository->findByOrder($serial, $order);
+        $inventory = $inventoryRepository->findByOrder($serial, $order, $limit);
 
         foreach ($inventory as $itemIndex => $item) {
             if (get_class($item) !== "App\Entity\Inventory") {

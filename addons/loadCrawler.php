@@ -63,7 +63,7 @@ if (count($a) > 0) {
             );
 
             foreach ($serials as $serial) {
-                $command = $PHPCli ." \"". ROOT ."bin/console\" SubmoduleCrawler";
+                $command = $PHPCli ." \"". ROOT ."bin/console\" Crawler";
                 exec($command, $output, $commandResult);
 
                 $execMessage = "\n". implode("\n", $output) ."\n";

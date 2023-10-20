@@ -50,21 +50,21 @@ if (count($a) > 0) {
     preg_match('#PHP 8\.#', $a[0], $matches);
 
     if (isset($matches[0])) {
-        $serialPath = ROOT ."public/serialize/";
+        $serializedPath = ROOT ."public/products/serialized/";
 
         $serials = array_diff(
-            scandir($serialPath), $difference
+            scandir($serializedPath), $difference
         );
 
         foreach ($serials as $serial) {
-            $chunkPath = $serialPath . $serial ."/";
+            $chunkPath = $serializedPath . $serial ."/";
 
             $chunks = array_diff(
                 scandir($chunkPath), $difference
             );
 
             foreach ($chunks as $chunk) {
-                $command = $PHPCli ." \"". ROOT ."bin/console\" persistInventory";
+                $command = $PHPCli ." \"". ROOT ."bin/console\" Persist";
                 exec($command, $output, $commandResult);
 
                 $execMessage = "\n". implode("\n", $output) ."\n";

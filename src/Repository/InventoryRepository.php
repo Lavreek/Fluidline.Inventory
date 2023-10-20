@@ -105,7 +105,7 @@ class InventoryRepository extends ServiceEntityRepository
     /**
      * @return Inventory[] Returns an array of Inventory objects
      */
-    public function findByOrder($serial, $order): array
+    public function findByOrder($serial, $order, $limit): array
     {
         $query = $this->createQueryBuilder('i')
             ->select('i')
@@ -116,7 +116,7 @@ class InventoryRepository extends ServiceEntityRepository
 
         return $query
             ->orderBy('i.id', 'ASC')
-            ->setMaxResults(100)
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult()
         ;
