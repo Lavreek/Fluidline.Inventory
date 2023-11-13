@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Inventory;
 
 use App\Entity\Inventory;
 use App\Form\Remover\BySerialType;

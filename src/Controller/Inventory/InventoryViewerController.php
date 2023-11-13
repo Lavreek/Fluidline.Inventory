@@ -1,19 +1,18 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Inventory;
 
 use App\Entity\Inventory;
 use App\Repository\InventoryRepository;
 use App\Service\Serializer;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryViewerController extends AbstractController
 {
-    #[Route('/view/serial', name: 'app_view_serial')]
+    #[Route('/admin/view/serial', name: 'admin_view_serial')]
     public function viewSerial(ManagerRegistry $registry): Response
     {
         /** @var InventoryRepository $inventoryRepository */
@@ -26,7 +25,7 @@ class InventoryViewerController extends AbstractController
         ]);
     }
 
-    #[Route('/view/serial/{serial}', name: 'app_view_products_by_serial')]
+    #[Route('/admin/view/serial/{serial}', name: 'admin_view_products_by_serial')]
     public function viewProductsBySerial($serial, ManagerRegistry $registry): Response
     {
         /** @var InventoryRepository $inventoryRepository */

@@ -1,7 +1,273 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Главна страница{% endblock %}
+{% block title %}Продукция Fluid-line{% endblock %}
 
 {% block body %}
-    {{ include('layouts/navigation.html.twig') }}
+    <style>
+        body {
+            margin: 0;
+        }
+
+        p {
+            margin-block-start: 0;
+            margin-block-end: 0;
+        }
+
+        ul {
+            margin-block-start: 0;
+            margin-block-end: 0;
+        }
+
+        .fl_color-primary {
+            background-color: #0876A6;
+        }
+
+        .fl_font-family-primary {
+            font-family: 'Inter';
+        }
+
+        .fl_container {
+            margin-left: calc(0px + (100vw - 1344px) * (288 / 576));
+            margin-right: calc(0px + (100vw - 1344px) * (288 / 576));
+        }
+
+        .fl_display-flex {
+            display: flex;
+        }
+
+        .fl_display-grid {
+            display: grid;
+        }
+
+        .fl_grid-4-cols {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .fl_display-block {
+            display: block;
+        }
+
+        .fl_justify-content-center {
+            justify-content: center;
+        }
+
+        .fl_text-decoration-none {
+            text-decoration: none;
+        }
+
+        .fl_text-color-white {
+            color: white;
+        }
+
+        .fl_flex-direction-column {
+            flex-direction: column;
+        }
+
+        .fl_justify-content-space-between {
+            justify-content: space-between;
+        }
+
+        .fl_justify-content-space-around {
+            justify-content: space-around;
+        }
+
+        .fl_align-items-center {
+            align-items: center;
+        }
+
+        .fl_display-none {
+            display: none;
+        }
+
+        .fl_width-100 {
+            width: 100%;
+        }
+
+        .fl_input-text {
+            border-radius: 6px;
+            font-family: 'Inter';
+            font-size: 20px;
+            padding: 6px 12px;
+            border: .5px solid rgba(0, 0, 0, .65);
+        }
+
+        .fl_input-text:focus {
+            outline: none;
+        }
+
+        .fl_mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .fl_my-1 {
+            margin-top: .5rem;
+            margin-bottom: .5rem;
+        }
+
+        .fl_my-2 {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .fl_my-3 {
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .fl_my-4 {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .fl_my-5 {
+            margin-top: 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .fl_width-50 {
+            width: 50%;
+        }
+
+        .fl_width-75 {
+            width: 75%;
+        }
+
+        .fl_flex-wrap-wrap {
+            flex-wrap: wrap;
+        }
+
+        .logo-block {
+            padding: 8px 0;
+        }
+
+        .logo-image {
+            height: 50px;
+        }
+
+        .nav-item {
+            padding: 6px 26px;
+            border-radius: 12px;
+            max-height: 32px;
+            background-color: transparent;
+            color: white;
+        }
+
+        .nav-item:hover {
+            color: black;
+            background-color: white;
+            transition: .5s;
+        }
+
+        .nav-row {
+            padding: 8px;
+        }
+
+        @media screen and (max-width: 1344px) {
+            .fl_container {
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+
+    </style>
+    <div class="fl_container">
+        <div class="fl_display-flex fl_justify-content-space-between fl_color-primary fl_align-items-center">
+            <a class="fl_text-decoration-none fl_font-family-primary fl_text-color-white" href="mailto:mail@fluid-line.ru" style="margin: 0 1em;">mail@fluid-line.ru</a>
+            <a class="fl_display-block logo-block" href="https://www.fluid-line.ru/">
+                <img class="fl_display-block logo-image" src="{{ asset('assets/images/logo-white.svg') }}" alt="LOGO">
+            </a>
+            <a class="fl_text-decoration-none fl_font-family-primary fl_text-color-white" href="tel:+74959844100" style="margin: 0 1em;">+7 (495) 984-41-00</a>
+        </div>
+        <div class="fl_display-flex" style="background-color: rgba(0, 0, 0, .65); border-radius: 0 0 6px 6px;">
+            <div class="fl_display-flex fl_width-100 fl_justify-content-space-around nav-row">
+                <a class="nav-item fl_text-decoration-none fl_font-family-primary" href="https://www.fluid-line.ru/">Продукция</a>
+                <a class="nav-item fl_text-decoration-none fl_font-family-primary" href="https://www.fluid-line.ru/about">О компании</a>
+                <a class="nav-item fl_text-decoration-none fl_font-family-primary" href="https://www.fluid-line.ru/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="fl_display-flex fl_justify-content-center fl_flex-direction-column fl_my-5">
+            <label class="fl_display-none" for="searchInput"></label>
+            <input class="fl_input-text fl_width-75 fl_mx-auto fl_my-1" name="searchInput" id="searchInput" data-fl-target="answerContainer">
+            <hr class="fl_width-75 fl_my-1">
+            <div class="fl_display-flex fl_flex-wrap-wrap" id="answerContainer">
+                <div>1</div>
+                <div>1</div>
+                <div>1</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        class HeaderSearch {
+            eraseAnswers(answers) {
+                $('#' + answers).empty();
+            }
+
+            setUniqSearch(answers, uniqid) {
+                $('#' + answers).attr('data-fl-search', uniqid);
+            }
+
+            searchTitle(input) {
+                let answers = $(input).attr('data-fl-target');
+
+                this.eraseAnswers(answers);
+
+                let uniqid = Date.now();
+                this.setUniqSearch(answers, uniqid);
+
+                if ($(input).val() !== "") {
+                    this.sendRequest(this, input, uniqid);
+                }
+            }
+
+            sendRequest(search, input, uniqid) {
+                $.ajax({
+                    type: "POST",
+                    url: "/search",
+                    data: {
+                        "code": $(input).val()
+                    },
+                    enctype: 'application/json',
+                    dataType: 'json',
+                    statusCode: {
+                        200: function (response) {
+                            let value = $(input).val();
+
+                            if (response !== undefined) {
+                                if (response['search']) {
+                                    let answers = $('#' + $(input).attr('data-fl-target') );
+
+                                    for (let i = 0; i < response['search'].length; i++) {
+                                        if (Number($(answers).attr('data-fl-search')) !== uniqid) {
+                                            return;
+                                        }
+
+                                        let search = response['search'][i];
+
+                                        let serial = search['serial'];
+                                        let code = search['code'];
+                                        let hint = code.replace(value, "<span class='hint text-light'>" + value + "</span>");
+
+                                        $(answers).append(
+                                            "<a class=\"_answer-link bg-white text-black\" href=\"/" + serial + "/" + code + "\">" + hint + "</a>"
+                                        );
+                                    }
+                                }
+                            }
+                        },
+                    }
+                });
+            }
+        }
+
+        let search = new HeaderSearch();
+
+        $("input[name=searchInput]").on('input', function () {
+            search.searchTitle($(this))
+        });
+    </script>
+
+{#    {{ include('layouts/navigation.html.twig') }}#}
 {% endblock %}
