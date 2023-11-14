@@ -49,6 +49,27 @@ class InventoryRepository extends ServiceEntityRepository
         }
     }
 
+    public function productsSearch(string $code) : array|bool|null
+    {
+        try {
+            $query = $this->createQueryBuilder('i');
+
+            return $query
+                ->where($query->expr()->like("i.code", ':code'))
+                ->setParameter('code', "%$code%")
+                ->setMaxResults(10)
+                ->getQuery()
+                ->getResult()
+                ;
+
+        } catch (NoResultException) {
+            return false;
+
+        } catch (NonUniqueResultException) {
+            return null;
+        }
+    }
+
     /**
      * @return Inventory[]|null Returns an array of Inventory objects
      */

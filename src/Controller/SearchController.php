@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Inventory;
 use App\Repository\InventoryRepository;
+use App\Service\Serializer;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,6 +26,32 @@ class SearchController extends AbstractController
             return new JsonResponse(['search' => $search]);
         }
 
-        return new JsonResponse([]);
+        return new JsonResponse(['По заданному запросу ничего не найдено.']);
+    }
+
+    #[Route('/search/full', name: 'app_search_full', methods: ['POST'])]
+    public function searchCards(Request $request, ManagerRegistry $registry) : JsonResponse
+    {
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $registry->getRepository(Inventory::class);
+
+        $requestData = $request->request->all();
+
+        if (count($requestData) > 0) {
+            $search = Serializer::serializeElement(
+                $inventoryRepository->productsSearch($requestData['code'])
+            );
+
+            $full = [];
+
+            foreach (json_decode($search, true) as $item) {
+                unset($item['created']);
+                $full[] = $item;
+            }
+
+            return new JsonResponse(['search' => $full]);
+        }
+
+        return new JsonResponse(['По заданному запросу ничего не найдено.']);
     }
 }
