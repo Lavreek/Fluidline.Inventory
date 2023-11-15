@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\InventoryParamhouse;
+use App\Entity\Inventory\InventoryParamhouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

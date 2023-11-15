@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Entity\Inventory;
+use App\Entity\Inventory\Inventory;
 use App\Repository\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

@@ -2,9 +2,8 @@
 
 namespace App\Service;
 
-use App\Entity\Inventory;
-use App\Entity\InventoryParamhouse;
-use Doctrine\ORM\EntityManager;
+use App\Entity\Inventory\Inventory;
+use App\Entity\Inventory\InventoryParamhouse;
 
 class EntityPuller
 {

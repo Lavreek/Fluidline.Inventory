@@ -2,9 +2,8 @@
 
 namespace App\Repository;
 
-use App\Entity\Inventory;
-use App\Entity\InventoryParamhouse;
-use App\Service\QueueBuilder;
+use App\Entity\Inventory\Inventory;
+use App\Entity\Inventory\InventoryParamhouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;

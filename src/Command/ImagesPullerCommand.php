@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Command\Helper\Directory;
-use App\Entity\Inventory;
+use App\Entity\Inventory\Inventory;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;

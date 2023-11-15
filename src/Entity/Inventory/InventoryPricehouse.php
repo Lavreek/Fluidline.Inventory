@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\Inventory;
 
 use App\Repository\InventoryPricehouseRepository;
 use Doctrine\ORM\Mapping as ORM;

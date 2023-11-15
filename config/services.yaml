@@ -8,6 +8,9 @@ parameters:
     # Заготовки продукции Fluid-line.ru - github.com/Lavreek/Fluidline.InventoryProducts
     products: '%kernel.project_dir%/public/products/'
 
+    # Файл логирования данных
+    logging: '%kernel.project_dir%/var/log/'
+
 services:
     # default configuration for services in *this* file
     _defaults:

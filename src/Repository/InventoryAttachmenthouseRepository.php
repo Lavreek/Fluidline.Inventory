@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\InventoryAttachmenthouse;
+use App\Entity\Inventory\InventoryAttachmenthouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 

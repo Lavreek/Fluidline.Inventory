@@ -2,7 +2,7 @@
 
 namespace App\Controller\Inventory;
 
-use App\Entity\Inventory;
+use App\Entity\Inventory\Inventory;
 use App\Form\Remover\BySerialType;
 use App\Repository\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;

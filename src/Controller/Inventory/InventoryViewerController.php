@@ -2,7 +2,7 @@
 
 namespace App\Controller\Inventory;
 
-use App\Entity\Inventory;
+use App\Entity\Inventory\Inventory;
 use App\Repository\InventoryRepository;
 use App\Service\Serializer;
 use Doctrine\Persistence\ManagerRegistry;

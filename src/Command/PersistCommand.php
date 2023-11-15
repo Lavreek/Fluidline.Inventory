@@ -3,9 +3,9 @@
 namespace App\Command;
 
 use App\Command\Helper\Directory;
-use App\Entity\Inventory;
-use App\Entity\InventoryAttachmenthouse;
-use App\Entity\InventoryPricehouse;
+use App\Entity\Inventory\Inventory;
+use App\Entity\Inventory\InventoryAttachmenthouse;
+use App\Entity\Inventory\InventoryPricehouse;
 use App\Repository\InventoryRepository;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;

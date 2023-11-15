@@ -2,7 +2,7 @@
 
 namespace App\Controller\Form;
 
-use App\Entity\Inventory;
+use App\Entity\Inventory\Inventory;
 use App\Form\InventoryInputType;
 use App\Repository\InventoryRepository;
 use App\Service\EntityPuller;

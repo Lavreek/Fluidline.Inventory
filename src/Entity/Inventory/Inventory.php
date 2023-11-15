@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\Inventory;
 
 use App\Repository\InventoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;

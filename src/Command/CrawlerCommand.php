@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Command\Helper\Directory;
-use App\Entity\Inventory;
+use App\Entity\Inventory\Inventory;
 use App\Repository\InventoryRepository;
 use App\Service\EntityPuller;
 use App\Service\FileReader;

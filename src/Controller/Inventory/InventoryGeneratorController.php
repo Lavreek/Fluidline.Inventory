@@ -2,8 +2,8 @@
 
 namespace App\Controller\Inventory;
 
-use App\Entity\Inventory;
-use App\Entity\InventoryAttachmenthouse;
+use App\Entity\Inventory\Inventory;
+use App\Entity\Inventory\InventoryAttachmenthouse;
 use App\Form\InventoryUpdateType;
 use App\Repository\InventoryAttachmenthouseRepository;
 use App\Repository\InventoryRepository;

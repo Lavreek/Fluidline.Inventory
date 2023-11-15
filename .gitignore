@@ -26,3 +26,11 @@
 ###> generated files ###
 *.lock
 ###< generated files ###
+
+###> symfony/webpack-encore-bundle ###
+/node_modules/
+/public/build/
+/public/assets/webpack
+npm-debug.log
+yarn-error.log
+###< symfony/webpack-encore-bundle ###

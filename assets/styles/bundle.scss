@@ -1,0 +1,198 @@
+.fl_color-primary {
+    background-color: #0876A6;
+}
+
+.fl_color-secondary {
+    background-color: rgba(0, 0, 0, .65);
+}
+
+.fl_font-family-primary {
+    font-family: 'Inter';
+}
+
+.fl_container {
+    margin-left: calc(0px + (100vw - 1344px) * (288 / 576));
+    margin-right: calc(0px + (100vw - 1344px) * (288 / 576));
+
+    @media screen and (max-width: 1344px) {
+        .fl_container {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    }
+}
+
+.fl_display-flex {
+    display: flex;
+}
+
+.fl_display-grid {
+    display: grid;
+}
+
+.fl_grid-4-cols {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.fl_display-block {
+    display: block;
+}
+
+.fl_justify-content-center {
+    justify-content: center;
+}
+
+.fl_text-decoration-none {
+    text-decoration: none;
+}
+
+.fl_text-color-white {
+    color: white;
+}
+
+.fl_flex-direction-column {
+    flex-direction: column;
+}
+
+.fl_justify-content-space-between {
+    justify-content: space-between;
+}
+
+.fl_justify-content-space-around {
+    justify-content: space-around;
+}
+
+.fl_align-items-center {
+    align-items: center;
+}
+
+.fl_display-none {
+    display: none;
+}
+
+.fl_width-100 {
+    width: 100%;
+}
+
+.fl_input-text {
+    border-radius: 6px;
+    font-family: 'Inter';
+    font-size: 20px;
+    padding: 6px 12px;
+    border: .5px solid rgba(0, 0, 0, .65);
+}
+
+.fl_input-text:focus {
+    outline: none;
+}
+
+.fl_mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.fl_my-1 {
+    margin-top: .5rem;
+    margin-bottom: .5rem;
+}
+
+.fl_my-2 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.fl_my-3 {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl_my-4 {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.fl_my-5 {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.fl_width-50 {
+    width: 50%;
+}
+
+.fl_width-75 {
+    width: 75%;
+}
+
+.fl_flex-wrap-wrap {
+    flex-wrap: wrap;
+}
+
+.fl_position-relative {
+    position: relative;
+}
+
+.fl_position-absolute {
+    position: absolute;
+}
+
+.fl_position-fixed {
+    position: fixed;
+}
+
+.fl_mb-none {
+    margin-bottom: 0 !important;
+}
+
+.fl_py-5 {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+}
+
+.fl_position-center {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.fl_position-top {
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.fl_position-top-right {
+    top: 0;
+    right: 0;
+}
+
+.fl_position-center-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.fl_justify-content-end {
+    justify-content: end;
+}
+
+.fl_height-100 {
+    height: 100%;
+}
+
+.fl_input-group {
+    row-gap: 1em;
+}
+
+.fl_button-submit {
+    color: white;
+    padding: 4px 12px;
+    background-color: rgba(8, 118, 166, .8);
+    transition: .5s;
+
+    &:hover {
+        color: white;
+        background-color: rgba(8, 118, 166, 1);
+    }
+}
