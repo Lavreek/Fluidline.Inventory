@@ -18,12 +18,17 @@ security:
             lazy: true
             provider: app_user_provider
             form_login:
-                username_parameter: "login[username]"
-                password_parameter: "login[password]"
                 login_path: auth_login
                 check_path: auth_login
+                form_only: true
+                username_parameter: "login[username]"
+                password_parameter: "login[password]"
+                default_target_path: "app_home"
                 enable_csrf: true
-            login_throttling: null
+                csrf_parameter: "login[_token]"
+                csrf_token_id: "login_item"
+            login_throttling:
+                max_attempts: 3
             logout:
                 path: /auth/logout
             # activate different ways to authenticate
@@ -37,6 +42,7 @@ security:
     access_control:
          - { path: ^/admin, roles: }
          - { path: ^/$|^/home$|^/homepage$, roles: }
+         - { path: ^/auth, roles: }
 
 when@test:
     security:

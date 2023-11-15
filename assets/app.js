@@ -9,3 +9,7 @@
 import './app.scss';
 
 require('bootstrap');
+
+const $ = require('jquery');
+
+import './scripts/home/search'

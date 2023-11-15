@@ -14,6 +14,12 @@ class LoginController extends AbstractController
     #[Route('/auth/login', name: 'auth_login')]
     public function login(AuthenticationUtils $authenticationUtils, Request $request): Response
     {
+        $user = $this->getUser();
+
+        if ($user) {
+            return $this->redirectToRoute('auth_account');
+        }
+
         $login_form = $this->createForm(LoginType::class);
         $login_form->handleRequest($request);
 

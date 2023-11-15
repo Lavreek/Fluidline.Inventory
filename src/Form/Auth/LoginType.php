@@ -50,10 +50,15 @@ class LoginType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
+            'method' => 'POST',
             'row_attr' => [
                 "class" => 'd-flex flex-column fl_font-family-primary _login-form'
             ],
             'data_class' => User::class,
+
+            'csrf_protection' => true,
+            'csrf_field_name' => '_token',
+            'csrf_token_id'   => 'login_item',
         ]);
     }
 }
