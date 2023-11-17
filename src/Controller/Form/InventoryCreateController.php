@@ -3,8 +3,8 @@
 namespace App\Controller\Form;
 
 use App\Entity\Inventory\Inventory;
-use App\Form\InventoryInputType;
-use App\Repository\InventoryRepository;
+use App\Form\Inventory\InventoryInputType;
+use App\Repository\Inventory\InventoryRepository;
 use App\Service\EntityPuller;
 use App\Service\FileReader;
 use Doctrine\ORM\EntityManagerInterface;

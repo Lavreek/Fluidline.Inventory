@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Inventory;
 
 use App\Entity\Inventory\InventoryPricehouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;

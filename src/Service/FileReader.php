@@ -241,7 +241,7 @@ class FileReader
                     $columnData = trim($columnData, "\"");
 
                     if (preg_match('#Параметр:(.*)#u', $columnData, $match)) {
-                        [$parameter, $name] = explode(':', $match[1]);
+                        [$parameter, $name] = explode(':', $match[1], 2);
                         $this->parameters[$parameter][$name] = [];
                         $position['parameters'][] = $columnKey;
 

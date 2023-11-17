@@ -2,7 +2,7 @@
 
 namespace App\Controller\Inventory;
 
-use App\Form\InventoryInputType;
+use App\Form\Inventory\InventoryInputType;
 use App\Form\InventoryPricesType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;

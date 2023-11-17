@@ -94,9 +94,15 @@ ul {
     color: rgba(8, 118, 166, 1);
 }
 
-.searched-image {
-    width: 100px;
-    height: 100px;
+.searched-image-block {
+    width: 100%;
+    max-width: 100px;
+
+    height: 100%;
+    max-height: 100px;
+}
+
+.searched-image-content {
     border: 1px solid rgba(0, 0, 0, .01);
 }
 
@@ -114,6 +120,12 @@ ul {
 .sections {
     display: flex;
     min-height: 100vh;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.navigation-sections {
+    display: grid;
     flex-direction: column;
     justify-content: space-between;
 }

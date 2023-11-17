@@ -1,3 +1,5 @@
+const $ = require('jquery');
+
 class HeaderSearch {
     eraseAnswers(answers) {
         $('#' + answers).empty();
@@ -24,19 +26,24 @@ class HeaderSearch {
         console.log(response);
 
         let card = document.createElement('div');
-        card.className = "fl_display-flex fl_width-100 searched-product";
+        card.className = "d-flex w-100 searched-product";
+
+        let div = document.createElement('div');
+        div.className = "d-flex align-items-center justify-content-center searched-image-block";
 
         let img = document.createElement('img');
-        img.className = "searched-image";
+        img.className = "h-100 searched-image-content";
         img.src = response.attachments.image;
         img.alt = response.code;
 
+        div.appendChild(img)
+
         let link = document.createElement('a');
-        link.className = "fl_width-100 fl_text-decoration-none fl_font-family-primary searched-link";
+        link.className = "w-100 text-decoration-none fl_font-family-primary searched-link";
         link.href = "/goods/" + response.code;
         link.innerHTML = "Показать подробнее";
 
-        card.appendChild(img);
+        card.appendChild(div);
         card.appendChild(search.buildDescription(response));
         card.appendChild(link);
         answers[0].appendChild(card);
@@ -44,7 +51,7 @@ class HeaderSearch {
 
     buildDescription(response) {
         let description = document.createElement('div');
-        description.className = "fl_display-flex fl_flex-direction-column fl_font-family-primary searched-description";
+        description.className = "d-flex flex-column fl_font-family-primary searched-description";
 
         let type = document.createElement('h2');
         type.innerHTML = response.type;
@@ -53,7 +60,7 @@ class HeaderSearch {
         code.innerHTML = response.code;
 
         let priceBlock = document.createElement('div');
-        priceBlock.className = "fl_display-flex fl_font-family-primary fl_justify-content-space-between fl_width-100 searched-price";
+        priceBlock.className = "d-flex justify-content-between w-100 fl_font-family-primary searched-price";
 
         let priceCurrency = document.createElement('p');
         priceCurrency.innerHTML = response.price.currency;
@@ -86,7 +93,8 @@ class HeaderSearch {
             type: "POST",
             url: "/search/full",
             data: {
-                "code": $(input).val()
+                "limit" : 24,
+                "code" : $(input).val()
             },
             enctype: 'application/json',
             dataType: 'json',

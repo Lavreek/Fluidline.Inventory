@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repository;
+namespace App\Repository\Inventory;
 
 use App\Entity\Inventory\Inventory;
 use App\Entity\Inventory\InventoryParamhouse;
@@ -48,7 +48,7 @@ class InventoryRepository extends ServiceEntityRepository
         }
     }
 
-    public function productsSearch(string $code) : array|bool|null
+    public function productsSearch(string $code, int $limit) : array|bool|null
     {
         try {
             $query = $this->createQueryBuilder('i');
@@ -56,7 +56,7 @@ class InventoryRepository extends ServiceEntityRepository
             return $query
                 ->where($query->expr()->like("i.code", ':code'))
                 ->setParameter('code', "%$code%")
-                ->setMaxResults(10)
+                ->setMaxResults($limit)
                 ->getQuery()
                 ->getResult()
                 ;

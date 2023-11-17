@@ -4,9 +4,9 @@ namespace App\Controller\Inventory;
 
 use App\Entity\Inventory\Inventory;
 use App\Entity\Inventory\InventoryAttachmenthouse;
-use App\Form\InventoryUpdateType;
-use App\Repository\InventoryAttachmenthouseRepository;
-use App\Repository\InventoryRepository;
+use App\Form\Inventory\InventoryUpdateType;
+use App\Repository\Inventory\InventoryAttachmenthouseRepository;
+use App\Repository\Inventory\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;

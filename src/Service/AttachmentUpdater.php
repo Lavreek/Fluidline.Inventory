@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Inventory\Inventory;
-use App\Repository\InventoryRepository;
+use App\Repository\Inventory\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 final class AttachmentUpdater

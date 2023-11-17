@@ -6,7 +6,7 @@ use App\Command\Helper\Directory;
 use App\Entity\Inventory\Inventory;
 use App\Entity\Inventory\InventoryAttachmenthouse;
 use App\Entity\Inventory\InventoryPricehouse;
-use App\Repository\InventoryRepository;
+use App\Repository\Inventory\InventoryRepository;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -175,10 +175,7 @@ class PersistCommand extends Command
                     $code = $inventory->findOneBy(['code' => $serializeData[$i]->getCode()]);
 
                     if (!is_null($code)) {
-                        if (!file_exists($prices['path'] . $serial . ".csv")) {
-                            touch($prices['path'] . $serial . ".gen");
-                            $prices['csv_content'] .= $prices['csv_header'];
-                        }
+                        $this->fillParameters($prices, $serial);
 
                         $pricehouse = new InventoryPricehouse();
                         $pricehouse->setValue(0);
@@ -186,30 +183,33 @@ class PersistCommand extends Command
                         $pricehouse->setCode($code);
                         $pricehouse->setCurrency('$');
 
-                        $prices['csv_content'] .= implode(';', [
-                            $code->getCode(), $pricehouse->getValue(), $pricehouse->getWarehouse(), $pricehouse->getCurrency()
-                        ]) ."\n";
-
-                        if (!file_exists($images['path'] . $serial . ".csv")) {
-                            touch($images['path'] . $serial . ".gen");
-                            $images['csv_content'] .= $images['csv_header'];
+                        if ($prices['exist'] !== 2) {
+                            $prices['csv_content'] .= implode(';', [
+                                $code->getCode(), $pricehouse->getValue(), $pricehouse->getWarehouse(), $pricehouse->getCurrency()
+                            ]) ."\n";
                         }
 
-                        if (!file_exists($models['path'] . $serial . ".csv")) {
-                            touch($models['path'] . $serial . ".gen");
-                            $models['csv_content'] .= $models['csv_header'];
-                        }
+                        $this->fillParameters($images, $serial);
+
+                        $this->fillParameters($models, $serial);
 
                         $attachmenthouse = new InventoryAttachmenthouse();
-                        $attachmenthouse->setImage("/assets/reborn/inventory/default.png");
-                        $images['csv_content'] .= implode(';', [
-                            $code->getCode(), $code->getId(), $attachmenthouse->getImage()
-                        ]) ."\n";
+
+                        $attachmenthouse->setImage("/assets/inventory/default.png");
+
+                        if ($images['exist'] !== 2) {
+                            $images['csv_content'] .= implode(';', [
+                                $code->getCode(), $code->getId(), $attachmenthouse->getImage()
+                            ]) ."\n";
+                        }
 
                         $attachmenthouse->setModel("");
-                        $models['csv_content'] .= implode(';', [
-                            $code->getCode(), $code->getId(), $attachmenthouse->getModel()
-                        ]) ."\n";
+
+                        if ($models['exist'] !== 2) {
+                            $models['csv_content'] .= implode(';', [
+                                $code->getCode(), $code->getId(), $attachmenthouse->getModel()
+                            ]) ."\n";
+                        }
 
                         $attachmenthouse->setCode($code);
 
@@ -268,6 +268,19 @@ class PersistCommand extends Command
         return Command::SUCCESS;
     }
 
+    private function fillParameters(&$parameter, $serial)
+    {
+        if (empty($parameter['csv_content'])) {
+            $this->startedFileExist($parameter['path'] . $serial, $parameter['exist'], $parameter['csv_content']);
+        }
+
+        if ($parameter['exist'] === 0) {
+            touch($parameter['path'] . $serial . ".gen");
+            $parameter['csv_content'] .= $parameter['csv_header'];
+            $parameter['exist'] = 1;
+        }
+    }
+
     /**
      * Первоначальная настройка переменных, которые участвуют в процессе добавления продукции
      * @return void
@@ -286,6 +299,7 @@ class PersistCommand extends Command
             'path' => $this->directories->getPricePath(),
             'csv_header' => "code;value;count;currency\n",
             'csv_content' => "",
+            'exist' => 0, // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
         ]);
 
         // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Image)
@@ -293,6 +307,7 @@ class PersistCommand extends Command
             'path' => $this->directories->getImagePath(),
             'csv_header' => "code;code_id;image_path\n",
             'csv_content' => "",
+            'exist' => 0, // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
         ]);
 
         // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Model)
@@ -300,7 +315,24 @@ class PersistCommand extends Command
             'path' => $this->directories->getModelPath(),
             'csv_header' => "code;code_id;model_path\n",
             'csv_content' => "",
+            'exist' => 0, // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
         ]);
+    }
+
+    private function startedFileExist($path, &$exist, &$content) : void
+    {
+        $genPath = $path .".gen";
+
+        if (file_exists($path .".csv")) {
+            $exist = 2;
+            if (file_exists($genPath)) {
+                unlink($genPath);
+            }
+
+        } elseif (file_exists($genPath)) {
+            $exist = 1;
+            $content = file_get_contents($genPath);
+        }
     }
 
     private function createLogfileResult(int $start, int $memory) : void

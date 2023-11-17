@@ -4,7 +4,7 @@ namespace App\Command;
 
 use App\Command\Helper\Directory;
 use App\Entity\Inventory\Inventory;
-use App\Repository\InventoryRepository;
+use App\Repository\Inventory\InventoryRepository;
 use App\Service\EntityPuller;
 use App\Service\FileReader;
 use Doctrine\Bundle\DoctrineBundle\Registry;
@@ -65,6 +65,8 @@ final class CrawlerCommand extends Command
         $crawlerTypes = $this->getFiles($crawlerPath);
 
         foreach ($crawlerTypes as $type) {
+            echo "Using type: $type\n";
+
             /** @var array $files Файлы продукции */
             $files = $this->getFiles($crawlerPath . $type);
 
@@ -86,6 +88,11 @@ final class CrawlerCommand extends Command
 
                     if (file_exists($this->directories->getLocksPath() . $type ."/". $serial .".lock")) {
                         echo "Serial $serial lock file exist.\n";
+                        continue;
+                    }
+
+                    if (file_exists($this->directories->getLocksPath() . $type ."/". $serial .".skip")) {
+                        echo "Serial $serial skipped.\n";
                         continue;
                     }
 

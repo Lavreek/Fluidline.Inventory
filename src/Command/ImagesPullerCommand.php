@@ -28,6 +28,8 @@ class ImagesPullerCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        ini_set('memory_limit', '2048M');
+
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
 
@@ -36,6 +38,8 @@ class ImagesPullerCommand extends Command
         $imagesPath = $this->directories->getImagePath();
 
         $imagesFiles = $this->getFiles($imagesPath);
+
+        $imageFilesProcessed = 0;
 
         foreach ($imagesFiles as $file) {
             $fileinfo = pathinfo($file);
@@ -46,6 +50,10 @@ class ImagesPullerCommand extends Command
                         continue;
                     }
 
+                    echo "Using file: {$fileinfo['filename']}\n";
+
+                    $imageFilesProcessed++;
+
                     $file = fopen($imagesPath . $file, 'r');
 
                     if (flock($file, LOCK_EX | LOCK_NB, $would_block)) {
@@ -53,21 +61,32 @@ class ImagesPullerCommand extends Command
 
                         $inventoryRepository = $manager->getRepository(Inventory::class);
 
+                        $inventory = $inventoryRepository->findOneBy(['serial' => $fileinfo['filename']]);
+
+                        if (is_null($inventory)) {
+                            echo "Serial {$fileinfo['filename']} is not isset\n";
+                            fclose($file);
+                            continue;
+                        }
+
+                        echo "Executing process in serial {$fileinfo['filename']}\n";
+                        
                         $rowPosition = 0;
-                        while ($row = fgetcsv($file)) {
+
+                        while ($row = fgetcsv($file, separator: ';')) {
                             if ($rowPosition > 0) {
-                                if (isset($row[0], $row[1])) {
-                                    if (!empty($row[0]) and !empty($row[1])) {
-                                        $inventory = $inventoryRepository->findOneBy(['serial' => $fileinfo['filename'],
-                                            'code' => $row[0]]);
+                                if (isset($row[0], $row[1], $row[2])) {
+                                    if (!empty($row[0]) and !empty($row[1] and !empty($row[2]))) {
+                                        $inventory = $inventoryRepository->findOneBy(
+                                            ['serial' => $fileinfo['filename'], 'code' => $row[0]]
+                                        );
 
                                         if (!is_null($inventory)) {
                                             $attachment = $inventory->getAttachments();
-                                            $attachment->setImage($row[1]);
+                                            $attachment->setImage($row[2]);
 
                                             $manager->persist($attachment);
                                         }
-
                                     }
                                 }
                             }
@@ -82,7 +101,7 @@ class ImagesPullerCommand extends Command
 
                         touch($imagesPath . $fileinfo['filename'] .".lock");
 
-                        continue;
+                        break;
                     }
 
                     if ($would_block) {
@@ -99,6 +118,10 @@ class ImagesPullerCommand extends Command
                     );
                 }
             }
+        }
+
+        if ($imageFilesProcessed > 0) {
+            echo "File {$fileinfo['filename']} was loaded.";
         }
 
         $this->createLogfileResult($executeScriptTime, $executeScriptMemory);
@@ -120,7 +143,7 @@ class ImagesPullerCommand extends Command
 
     private function getFiles(string $path) : array
     {
-        $difference = ['.', '..', '.gitignore'];
+        $difference = ['.', '..', '.gitignore', 'example.csv'];
         return array_diff(scandir($path), $difference);
     }
 

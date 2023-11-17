@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Inventory\Inventory;
-use App\Repository\InventoryRepository;
+use App\Repository\Inventory\InventoryRepository;
 use App\Service\Serializer;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,14 +32,25 @@ class SearchController extends AbstractController
     #[Route('/search/full', name: 'app_search_full', methods: ['POST'])]
     public function searchCards(Request $request, ManagerRegistry $registry) : JsonResponse
     {
-        /** @var InventoryRepository $inventoryRepository */
-        $inventoryRepository = $registry->getRepository(Inventory::class);
-
         $requestData = $request->request->all();
 
+        $limit = 10;
+
         if (count($requestData) > 0) {
+            /** @var InventoryRepository $inventoryRepository */
+            $inventoryRepository = $registry->getRepository(Inventory::class);
+
+            if (isset($requestData['limit'])) {
+                if ($requestData['limit'] < 25) {
+                    $limit = $requestData['limit'];
+
+                } else {
+                    $limit = 25;
+                }
+            }
+
             $search = Serializer::serializeElement(
-                $inventoryRepository->productsSearch($requestData['code'])
+                $inventoryRepository->productsSearch($requestData['code'], $limit)
             );
 
             $full = [];

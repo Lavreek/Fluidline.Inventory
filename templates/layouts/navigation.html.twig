@@ -1,41 +1,12 @@
-<style>
-    ._navigation-divider {
-        width: 320px;
-        height: 100vh;
-    }
-
-    ._navigation {
-        display: flex;
-        position: fixed;
-        left: 0;
-        top: 0;
-        flex-direction: column;
-        width: 320px;
-        border-right: 1px solid rgba(128, 128, 128, 0.5);
-        height: 100vh;
-        overflow-y: auto;
-        padding: 2em 0;
-    }
-
-    ._link {
-        font-size: 16px;
-        display: block;
-        padding: .5rem 1rem;
-        color: black;
-        transition: .5s;
-        text-decoration: none;
-    }
-
-    ._link:hover {
-        color: #2563EB;
-    }
-</style>
-<div class="_navigation-divider"></div>
-<div class="_navigation">
-    <a class="_link" href="{{ path('app_download') }}">Загрузить продукцию</a>
-    <a class="_link" href="{{ path('app_view_serial') }}">Загруженные серии</a>
-    <a class="_link" href="{{ path('app_update_full_image') }}">Обновить изображения</a>
-    <a class="_link" href="{{ path('app_update_full_model') }}">Обновить модели</a>
-    <a class="_link" href="{{ path('app_update_full_price') }}">Обновить цены</a>
-    <a class="_link" href="{{ path('app_remove_by_serial') }}">Удалить продукцию по серии</a>
+<div class="w-25 h-100"></div>
+<div class="d-flex flex-column position-fixed w-25 h-100 overflow-y-auto _navigation">
+    <a class="_link" href="{{ path('app_home') }}">Вернуться к поиску</a>
+    {% if 'ROLE_USER' in user.roles %}
+        <hr class="my-3">
+        <a class="_link" href="{{ path('auth_account') }}">Функций для пользователя в данный момент не существует</a>
+    {% endif %}
+    {% if 'ROLE_ADMIN' in user.roles %}
+        <hr class="my-3">
+        <a class="_link" href="{{ path('admin_loaded_serials') }}">Отобразить загруженные серии</a>
+    {% endif %}
 </div>

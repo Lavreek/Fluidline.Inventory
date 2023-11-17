@@ -2,7 +2,7 @@
 
 namespace App\Controller\Inventory;
 
-use App\Form\InventoryUpdateType;
+use App\Form\Inventory\InventoryUpdateType;
 use App\Service\AttachmentUpdater;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

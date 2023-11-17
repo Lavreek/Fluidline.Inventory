@@ -2,7 +2,7 @@
 
 namespace App\Entity\Inventory;
 
-use App\Repository\InventoryParamhouseRepository;
+use App\Repository\Inventory\InventoryParamhouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryParamhouseRepository::class)]
