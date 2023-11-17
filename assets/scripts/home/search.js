@@ -32,7 +32,7 @@ class HeaderSearch {
         div.className = "d-flex align-items-center justify-content-center searched-image-block";
 
         let img = document.createElement('img');
-        img.className = "h-100 searched-image-content";
+        img.className = "mw-100 mh-100 searched-image-content";
         img.src = response.attachments.image;
         img.alt = response.code;
 
