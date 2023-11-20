@@ -12,16 +12,31 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class LoadedController extends AbstractController
 {
-    #[Route('/admin/loaded/serials', name: 'admin_loaded_serials')]
-    public function viewSerial(ManagerRegistry $registry): Response
+    #[Route('/admin/loaded/types', name: 'admin_loaded_types')]
+    public function viewLoadedTypes(ManagerRegistry $registry): Response
     {
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $registry->getRepository(Inventory::class);
 
-        $serials = $inventoryRepository->distinctSerial();
+        $types = $inventoryRepository->getDistinctTypes();
+
+        return $this->render('inventory/loaded/types.html.twig', [
+            'user' => $this->getUser(),
+            'types' => $types,
+        ]);
+    }
+
+    #[Route('/admin/loaded/{type}/serials', name: 'admin_loaded_types_serials')]
+    public function viewLoadedTypeSerials($type, ManagerRegistry $registry): Response
+    {
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $registry->getRepository(Inventory::class);
+
+        $serials = $inventoryRepository->getDistinctTypeSerials($type);
 
         return $this->render('inventory/loaded/serials.html.twig', [
             'user' => $this->getUser(),
+            'type' => $type,
             'serials' => $serials,
         ]);
     }

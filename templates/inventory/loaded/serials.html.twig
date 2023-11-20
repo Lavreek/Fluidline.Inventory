@@ -1,14 +1,16 @@
 {% extends 'auth/account/index.html.twig' %}
 
-{% block title %}Загруженные серии{% endblock %}
+{% block title %}Загруженные серии категории "{{ type }}"{% endblock %}
 
 {% block content %}
-    <div class="_serial-list">
-        {% for i in serials %}
-            <div class="_link-group">
-                <a class="text-decoration-none _link text-black" href="./serial/{{ i.serial }}">{{ i.type }} | {{ i.serial }}</a>
-                <a class="text-decoration-none _link text-danger" href="{{ path('delete_type_serial', {'type' : i.type, 'serial' : i.serial}) }}">Удалить</a>
-            </div>
-        {% endfor %}
+    <div class="d-flex w-75 p-5">
+        <div class="_serial-list">
+            {% for i in serials %}
+                <div class="_link-group">
+                    <a class="text-decoration-none _link text-black" href="./serial/{{ i.serial }}">{{ type }} | {{ i.serial }}</a>
+                    <a class="text-decoration-none _link text-danger" href="{{ path('delete_type_serial', {'type' : type, 'serial' : i.serial}) }}">Удалить</a>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}

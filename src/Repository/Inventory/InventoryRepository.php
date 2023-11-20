@@ -97,11 +97,26 @@ class InventoryRepository extends ServiceEntityRepository
     /**
      * @return Inventory[] Returns an array of Inventory objects
      */
-    public function distinctSerial(): array
+    public function getDistinctTypes(): array
     {
         return $this->createQueryBuilder('i')
             ->distinct()
-            ->select("i.serial", 'i.type')
+            ->select('i.type')
+            ->getQuery()
+            ->getResult()
+            ;
+    }
+
+    /**
+     * @return Inventory[] Returns an array of Inventory objects
+     */
+    public function getDistinctTypeSerials(string $type): array
+    {
+        return $this->createQueryBuilder('i')
+            ->distinct()
+            ->select("i.serial")
+            ->where("i.type = :type")
+            ->setParameter('type', $type)
             ->getQuery()
             ->getResult()
         ;

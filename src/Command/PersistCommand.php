@@ -113,7 +113,7 @@ class PersistCommand extends Command
             if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
                 echo "\nUsing: $serialFolder directory.";
 
-                preg_match_all('#(\w+) \[.+\]#u', $serialFolder, $match);
+                preg_match_all('#([\w|\-|\s]*) \[.+\]#u', $serialFolder, $match);
 
                 if (isset($match[1][0])) {
                     $serial = $match[1][0];

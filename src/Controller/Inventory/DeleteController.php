@@ -33,21 +33,12 @@ class DeleteController extends AbstractController
     }
 
     #[Route('/delete/{type}/{serial}', name: 'delete_type_serial')]
-    public function byTypeSerial($type, $serial, ManagerRegistry $registry): Response
+    public function deleteTypeSerial($type, $serial, ManagerRegistry $registry): Response
     {
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $registry->getRepository(Inventory::class);
         $inventoryRepository->removeBySerialType($serial, $type);
 
-        return $this->redirectToRoute('admin_loaded_serials');
+        return $this->redirectToRoute('admin_loaded_types');
     }
-
-
-//    #[Route('/inventory/remover', name: 'app_inventory_remover')]
-//    public function index(): Response
-//    {
-//        return $this->render('inventory_remover/index.html.twig', [
-//            'controller_name' => 'InventoryRemoverController',
-//        ]);
-//    }
 }

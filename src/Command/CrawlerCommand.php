@@ -65,8 +65,6 @@ final class CrawlerCommand extends Command
         $crawlerTypes = $this->getFiles($crawlerPath);
 
         foreach ($crawlerTypes as $type) {
-            echo "Using type: $type\n";
-
             /** @var array $files Файлы продукции */
             $files = $this->getFiles($crawlerPath . $type);
 
@@ -81,21 +79,27 @@ final class CrawlerCommand extends Command
                     $fileinfo = pathinfo($file);
                     $serial = $fileinfo['filename'];
 
+                    if (preg_match('#raw|RAW#u', $serial)) {
+                        // echo "Serial $serial already is raw data.\n";
+                        continue;
+                    }
+
                     if (is_dir($this->directories->getSerializePath()  . $serial)) {
-                        echo "Serial $serial already in queue.\n";
+                        // echo "Serial $serial already in queue.\n";
                         continue;
                     }
 
                     if (file_exists($this->directories->getLocksPath() . $type ."/". $serial .".lock")) {
-                        echo "Serial $serial lock file exist.\n";
+                        // echo "Serial $serial lock file exist.\n";
                         continue;
                     }
 
                     if (file_exists($this->directories->getLocksPath() . $type ."/". $serial .".skip")) {
-                        echo "Serial $serial skipped.\n";
+                        // echo "Serial $serial skipped.\n";
                         continue;
                     }
 
+                    echo "Using type: $type\n";
                     echo "Serial $serial using now.\n";
 
                     $this->removeSerial($type, $serial);
