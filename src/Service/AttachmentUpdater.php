@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Service;
 
 use App\Entity\Inventory\Inventory;
@@ -8,35 +7,39 @@ use Doctrine\Persistence\ManagerRegistry;
 
 final class AttachmentUpdater
 {
+
     private string $filepath;
 
     private string $serial;
 
-    private array $search = ["\r"];
+    private array $search = [
+        "\r"
+    ];
 
-    public function __construct() { }
+    public function __construct()
+    {}
 
-    public function setFilepath($path) : void
+    public function setFilepath($path): void
     {
         $this->filepath = $path;
     }
 
-    public function getFilepath() : string|null
+    public function getFilepath(): string|null
     {
         return $this->filepath;
     }
 
-    public function setSerial($serial) : void
+    public function setSerial($serial): void
     {
         $this->serial = $serial;
     }
 
-    public function getSerial() : string|null
+    public function getSerial(): string|null
     {
         return $this->serial;
     }
 
-    public function updateAttachments(string $fileContent, string $column) : string
+    public function updateAttachments(string $fileContent, string $column): string
     {
         $filepath = $this->getFilepath();
         $serial = $this->getSerial();
@@ -44,11 +47,9 @@ final class AttachmentUpdater
 
         $fileContent = explode("\n", str_replace($this->search, '', $fileContent));
 
-        $newContent =
-        $cronContent = "";
+        $newContent = $cronContent = "";
 
-        $code_id =
-        $code = false;
+        $code_id = $code = false;
 
         $row = 0;
         while ($data = fgetcsv($file, separator: ';')) {
@@ -101,9 +102,9 @@ final class AttachmentUpdater
                 }
             }
 
-            $newContent .= implode(';', $data) ."\n";
+            $newContent .= implode(';', $data) . "\n";
 
-            $row++;
+            $row ++;
         }
         fclose($file);
 
@@ -111,7 +112,6 @@ final class AttachmentUpdater
 
         if ($code !== false and $code_id !== false) {
             $cronContent = "code;code_id;$column\n$cronContent";
-
         }
         if ($code_id !== false and $code === false) {
             $cronContent = "code_id;$column\n$cronContent";
@@ -152,7 +152,9 @@ final class AttachmentUpdater
                     return;
                 }
 
-                $inventory = $inventoryRepository->findOneBy(['code' => $updatedRow[$codeIndex]]);
+                $inventory = $inventoryRepository->findOneBy([
+                    'code' => $updatedRow[$codeIndex]
+                ]);
 
                 if ($inventory) {
                     if ($entityColumn !== "price") {
@@ -162,18 +164,19 @@ final class AttachmentUpdater
                     }
 
                     switch ($entityColumn) {
-                        case 'image' : {
-                            $attachments->setImage($updatedRow[$columnIndex]);
-                            break;
-                        }
+                        case 'image':
+                            {
+                                $attachments->setImage($updatedRow[$columnIndex]);
+                                break;
+                            }
 
-                        case 'model' : {
-                            $attachments->setModel($updatedRow[$columnIndex]);
-                            break;
-                        }
-                        case 'price' : {
-
-                        }
+                        case 'model':
+                            {
+                                $attachments->setModel($updatedRow[$columnIndex]);
+                                break;
+                            }
+                        case 'price':
+                            {}
                     }
 
                     $entities[] = $attachments;

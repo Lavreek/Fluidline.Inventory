@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Command;
 
 use App\Command\Helper\Directory;
@@ -11,17 +10,16 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(
-    name: 'PricePuller',
-    description: 'Добавление основных цен на продукцию',
-)]
+#[AsCommand(name: 'PricePuller', description: 'Добавление основных цен на продукцию')]
 class PricePullerCommand extends Command
 {
+
     private Directory $directories;
 
     private ObjectManager $manager;
 
-    protected function configure() : void {
+    protected function configure(): void
+    {
         $this->directories = new Directory();
     }
 
@@ -39,7 +37,7 @@ class PricePullerCommand extends Command
             $fileinfo = pathinfo($file);
 
             if (isset($fileinfo['extension'])) {
-                if ($fileinfo['extension']  == "csv") {
+                if ($fileinfo['extension'] == "csv") {
                     $file = fopen($pricePath . $file, 'r');
 
                     if (flock($file, LOCK_EX | LOCK_NB, $would_block)) {
@@ -51,12 +49,13 @@ class PricePullerCommand extends Command
                         while ($row = fgetcsv($file, separator: ';')) {
                             if ($rowPosition > 0) {
                                 if (isset($row[0], $row[1], $row[2], $row[3])) {
-                                    if (!empty($row[0]) and !empty($row[3])) { // row[1] and row[2] can be zero
+                                    if (! empty($row[0]) and ! empty($row[3])) { // row[1] and row[2] can be zero
                                         $inventory = $inventoryRepository->findOneBy([
-                                            'code' => $row[0], 'serial' => $fileinfo['filename']
+                                            'code' => $row[0],
+                                            'serial' => $fileinfo['filename']
                                         ]);
 
-                                        if (!is_null($inventory)) {
+                                        if (! is_null($inventory)) {
                                             $price = $inventory->getPrice();
 
                                             $price->setValue($row[1]);
@@ -69,7 +68,7 @@ class PricePullerCommand extends Command
                                 }
                             }
 
-                            $rowPosition++;
+                            $rowPosition ++;
                         }
 
                         try {
@@ -78,15 +77,10 @@ class PricePullerCommand extends Command
                         } catch (\Exception | \Throwable $exception) {
                             $customMessage = "\nFlush error in {$fileinfo['filename']}\n";
 
-                            file_put_contents(
-                                $this->directories->getLogfilePath(),
-                                "Symfony command: PricePuller\n".
-                                $customMessage . $exception->getMessage() ."\n",
-                                FILE_APPEND
-                            );
+                            file_put_contents($this->directories->getLogfilePath(), "Symfony command: PricePuller\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
                         }
 
-                        touch($pricePath . $fileinfo['filename'] .".lock");
+                        touch($pricePath . $fileinfo['filename'] . ".lock");
 
                         fclose($file);
 
@@ -100,12 +94,7 @@ class PricePullerCommand extends Command
 
                     $date = date('d-m-Y H:i:s');
 
-                    file_put_contents(
-                        $this->directories->getLogfilePath(),
-                        "Symfony command: PricePuller in $date\n" .
-                        "Другой процесс уже удерживает блокировку файла \"{$fileinfo['basename']}\"",
-                        FILE_APPEND
-                    );
+                    file_put_contents($this->directories->getLogfilePath(), "Symfony command: PricePuller in $date\n" . "Другой процесс уже удерживает блокировку файла \"{$fileinfo['basename']}\"", FILE_APPEND);
                 }
             }
         }
@@ -116,7 +105,9 @@ class PricePullerCommand extends Command
     private function initialSettings()
     {
         /** @var $container - Контейнер приложения Symfony */
-        $container = $this->getApplication()->getKernel()->getContainer();
+        $container = $this->getApplication()
+            ->getKernel()
+            ->getContainer();
 
         /** @var Registry $doctrineRegistry */
         $doctrineRegistry = $container->get('doctrine');
@@ -125,23 +116,27 @@ class PricePullerCommand extends Command
         $this->directories->setProductsPath($container->getParameter('products'));
     }
 
-    private function getFiles(string $path) : array
+    private function getFiles(string $path): array
     {
-        $difference = ['.', '..', '.gitignore'];
+        $difference = [
+            '.',
+            '..',
+            '.gitignore'
+        ];
         return array_diff(scandir($path), $difference);
     }
 
-    private function setManager(ObjectManager $manager) : void
+    private function setManager(ObjectManager $manager): void
     {
         $this->manager = $manager;
     }
 
-    private function getManager() : ObjectManager
+    private function getManager(): ObjectManager
     {
         return $this->manager;
     }
 
-    private function createLogfileResult(int $start, int $memory) : void
+    private function createLogfileResult(int $start, int $memory): void
     {
         $currentDate = date('d-m-Y H:i:s');
         $startDate = date('d-m-Y H:i:s', $start);
@@ -151,14 +146,6 @@ class PricePullerCommand extends Command
         $riseMemory = $currentMemory - $startMemory;
         $peakMemory = memory_get_peak_usage();
 
-        file_put_contents(
-            $this->directories->getLogfilePath(),
-            "Symfony command: PricePuller\n".
-            "Процесс завершён добавления цен на товары завершён\n".
-            "\tВремя начала: $startDate, Время завершения: $currentDate\n".
-            "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n".
-            "\tПик использования памяти: $peakMemory\n",
-            FILE_APPEND
-        );
+        file_put_contents($this->directories->getLogfilePath(), "Symfony command: PricePuller\n" . "Процесс завершён добавления цен на товары завершён\n" . "\tВремя начала: $startDate, Время завершения: $currentDate\n" . "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n" . "\tПик использования памяти: $peakMemory\n", FILE_APPEND);
     }
 }

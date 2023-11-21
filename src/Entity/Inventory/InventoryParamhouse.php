@@ -1,15 +1,19 @@
 <?php
-
 namespace App\Entity\Inventory;
 
 use App\Repository\Inventory\InventoryParamhouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryParamhouseRepository::class)]
-#[ORM\Index(name: 'idx_name', columns: ['name'])]
-#[ORM\Index(name: 'idx_value', columns: ['value'])]
+#[ORM\Index(name: 'idx_name', columns: [
+    'name'
+])]
+#[ORM\Index(name: 'idx_value', columns: [
+    'value'
+])]
 class InventoryParamhouse
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -24,7 +28,9 @@ class InventoryParamhouse
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'parameters')]
+    #[ORM\ManyToOne(cascade: [
+        'persist'
+    ], inversedBy: 'parameters')]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?Inventory $code = null;
 

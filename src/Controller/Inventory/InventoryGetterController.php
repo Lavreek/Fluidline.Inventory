@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Inventory;
 
 use App\Controller\MapEntity;
@@ -15,12 +14,15 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryGetterController extends AbstractController
 {
+
     /**
      * Максимальное возможное количество продуктов в 1 заказ
      */
     const query_max_limit = 50;
 
-    #[Route('/get/{serial}', name: 'app_get_serial', methods: ['POST'])]
+    #[Route('/get/{serial}', name: 'app_get_serial', methods: [
+        'POST'
+    ])]
     public function getSerial($serial, Request $request, ManagerRegistry $registry): JsonResponse
     {
         $limit = 10;
@@ -40,16 +42,23 @@ class InventoryGetterController extends AbstractController
         $inventoryRepository = $manager->getRepository(Inventory::class);
 
         /** @var Inventory[] $inventory */
-        $inventory = $inventoryRepository->findBy(['serial' => $serial], limit: $limit);
+        $inventory = $inventoryRepository->findBy([
+            'serial' => $serial
+        ], limit: $limit);
 
         $filter = $this->getSerialFilter($registry, $serial);
 
         $products = $this->prepareRequest($inventory, $filter);
 
-        return new JsonResponse(['filter' => $filter, 'products' => $products]);
+        return new JsonResponse([
+            'filter' => $filter,
+            'products' => $products
+        ]);
     }
 
-    #[Route('/get/ordered/{serial}', name: 'app_get_ordered_serial', methods: ['POST'])]
+    #[Route('/get/ordered/{serial}', name: 'app_get_ordered_serial', methods: [
+        'POST'
+    ])]
     public function getOrderedSerial($serial, Request $request, ManagerRegistry $registry): JsonResponse
     {
         $limit = 10;
@@ -87,14 +96,16 @@ class InventoryGetterController extends AbstractController
         $filter = $this->getSerialFilter($registry, $serial);
         $products = $this->prepareRequest($inventory, $filter);
 
-        return new JsonResponse(['filter' => $filter, 'products' => $products]);
+        return new JsonResponse([
+            'filter' => $filter,
+            'products' => $products
+        ]);
     }
 
     #[Route('/get/product/{code}', name: 'app_get_product')]
-    public function getProduct(
-        #[MapEntity(mapping: ['code' => 'code'])]
-        Inventory $inventory
-    ): JsonResponse
+    public function getProduct(#[MapEntity(mapping: [
+        'code' => 'code'
+    ])] Inventory $inventory): JsonResponse
     {
         $serialize = Serializer::serializeElement($inventory);
 
@@ -115,7 +126,7 @@ class InventoryGetterController extends AbstractController
         return $inventoryRepository->getSerialFilter($serial);
     }
 
-    private function prepareRequest($inventory, &$filter) : array
+    private function prepareRequest($inventory, &$filter): array
     {
         $serializerArray = $filterOrder = $filterConstructed = [];
 
@@ -127,24 +138,16 @@ class InventoryGetterController extends AbstractController
             foreach ($object['parameters'] as $parameterIndex => $parameter) {
                 $parameter['name'] = strip_tags($parameter['name']);
 
-                if (!in_array($parameter['name'], $filterOrder)) {
+                if (! in_array($parameter['name'], $filterOrder)) {
                     $filterOrder[] = $parameter['name'];
                 }
 
-                $object['parameters'][$parameterIndex]['value'] =
-                    strip_tags($object['parameters'][$parameterIndex]['value']);
+                $object['parameters'][$parameterIndex]['value'] = strip_tags($object['parameters'][$parameterIndex]['value']);
 
-                unset(
-                    $object['parameters'][$parameterIndex]['id'],
-                    $object['parameters'][$parameterIndex]['code'],
-                );
+                unset($object['parameters'][$parameterIndex]['id'], $object['parameters'][$parameterIndex]['code']);
             }
 
-            unset(
-                $object['price']['id'],
-                $object['price']['code'],
-                $object['created'],
-            );
+            unset($object['price']['id'], $object['price']['code'], $object['created']);
 
             $serializerArray[] = $object;
         }
@@ -154,7 +157,7 @@ class InventoryGetterController extends AbstractController
                 if ($item['name'] == $filterPosition) {
                     $filterConstructed[$item['name']]['values'][] = $item['value'];
 
-                    if (!is_null($item['description'])) {
+                    if (! is_null($item['description'])) {
                         $filterConstructed[$item['name']]['descriptions'][] = $item['description'];
                     } else {
                         $filterConstructed[$item['name']]['descriptions'][] = "";

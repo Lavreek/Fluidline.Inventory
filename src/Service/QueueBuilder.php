@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Service;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -7,26 +6,28 @@ use Symfony\Component\Mime\Part\File;
 
 class QueueBuilder extends AbstractController
 {
+
     private string $serial;
 
     private string $queueDirectory;
 
-    public function setQueueDirectory($queueDirectory) : void
+    public function setQueueDirectory($queueDirectory): void
     {
         $this->queueDirectory = $queueDirectory;
     }
 
-    public function setSerial($serial) : void
+    public function setSerial($serial): void
     {
         $this->serial = $serial;
     }
 
-    public function getSerial() : string
+    public function getSerial(): string
     {
         return $this->serial;
     }
 
-    public function createQueueChunks($products) {
+    public function createQueueChunks($products)
+    {
         if (empty($this->serial)) {
             throw new \Exception("Серия не может быть пуста");
         }
@@ -38,7 +39,7 @@ class QueueBuilder extends AbstractController
 
         $serialDirectory = $directory . "/" . $serial . "/";
 
-        if (!is_dir($serialDirectory)) {
+        if (! is_dir($serialDirectory)) {
             mkdir($serialDirectory, recursive: true);
         }
 
@@ -48,7 +49,7 @@ class QueueBuilder extends AbstractController
         }
     }
 
-    public function getQueueDirectory() : string
+    public function getQueueDirectory(): string
     {
         return $this->queueDirectory;
     }

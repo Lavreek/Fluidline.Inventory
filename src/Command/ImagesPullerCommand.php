@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Command;
 
 use App\Command\Helper\Directory;
@@ -11,12 +10,10 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(
-    name: 'ImagesPuller',
-    description: 'Загрузка изображений для продукции',
-)]
+#[AsCommand(name: 'ImagesPuller', description: 'Загрузка изображений для продукции')]
 class ImagesPullerCommand extends Command
 {
+
     private Directory $directories;
 
     private ObjectManager $manager;
@@ -46,13 +43,13 @@ class ImagesPullerCommand extends Command
 
             if (isset($fileinfo['extension'])) {
                 if ($fileinfo['extension'] == 'csv') {
-                    if (in_array($fileinfo['filename'] .".lock", $imagesFiles)) {
+                    if (in_array($fileinfo['filename'] . ".lock", $imagesFiles)) {
                         continue;
                     }
 
                     echo "Using file: {$fileinfo['filename']}\n";
 
-                    $imageFilesProcessed++;
+                    $imageFilesProcessed ++;
 
                     $file = fopen($imagesPath . $file, 'r');
 
@@ -61,7 +58,9 @@ class ImagesPullerCommand extends Command
 
                         $inventoryRepository = $manager->getRepository(Inventory::class);
 
-                        $inventory = $inventoryRepository->findOneBy(['serial' => $fileinfo['filename']]);
+                        $inventory = $inventoryRepository->findOneBy([
+                            'serial' => $fileinfo['filename']
+                        ]);
 
                         if (is_null($inventory)) {
                             echo "Serial {$fileinfo['filename']} is not isset\n";
@@ -70,18 +69,19 @@ class ImagesPullerCommand extends Command
                         }
 
                         echo "Executing process in serial {$fileinfo['filename']}\n";
-                        
+
                         $rowPosition = 0;
 
                         while ($row = fgetcsv($file, separator: ';')) {
                             if ($rowPosition > 0) {
                                 if (isset($row[0], $row[1], $row[2])) {
-                                    if (!empty($row[0]) and !empty($row[1] and !empty($row[2]))) {
-                                        $inventory = $inventoryRepository->findOneBy(
-                                            ['serial' => $fileinfo['filename'], 'code' => $row[0]]
-                                        );
+                                    if (! empty($row[0]) and ! empty($row[1] and ! empty($row[2]))) {
+                                        $inventory = $inventoryRepository->findOneBy([
+                                            'serial' => $fileinfo['filename'],
+                                            'code' => $row[0]
+                                        ]);
 
-                                        if (!is_null($inventory)) {
+                                        if (! is_null($inventory)) {
                                             $attachment = $inventory->getAttachments();
                                             $attachment->setImage($row[2]);
 
@@ -91,7 +91,7 @@ class ImagesPullerCommand extends Command
                                 }
                             }
 
-                            $rowPosition++;
+                            $rowPosition ++;
                         }
 
                         $manager->flush();
@@ -99,7 +99,7 @@ class ImagesPullerCommand extends Command
 
                         fclose($file);
 
-                        touch($imagesPath . $fileinfo['filename'] .".lock");
+                        touch($imagesPath . $fileinfo['filename'] . ".lock");
 
                         break;
                     }
@@ -110,12 +110,7 @@ class ImagesPullerCommand extends Command
 
                     $date = date('d-m-Y H:i:s');
 
-                    file_put_contents(
-                        $this->directories->getLogfilePath(),
-                        "Symfony command: ImagesPuller in $date\n" .
-                        "Другой процесс уже удерживает блокировку файла \"{$fileinfo['basename']}\"",
-                        FILE_APPEND
-                    );
+                    file_put_contents($this->directories->getLogfilePath(), "Symfony command: ImagesPuller in $date\n" . "Другой процесс уже удерживает блокировку файла \"{$fileinfo['basename']}\"", FILE_APPEND);
                 }
             }
         }
@@ -132,7 +127,9 @@ class ImagesPullerCommand extends Command
     private function initialSettings()
     {
         /** @var $container - Контейнер приложения Symfony */
-        $container = $this->getApplication()->getKernel()->getContainer();
+        $container = $this->getApplication()
+            ->getKernel()
+            ->getContainer();
 
         /** @var Registry $doctrineRegistry */
         $doctrineRegistry = $container->get('doctrine');
@@ -141,23 +138,28 @@ class ImagesPullerCommand extends Command
         $this->directories->setProductsPath($container->getParameter('products'));
     }
 
-    private function getFiles(string $path) : array
+    private function getFiles(string $path): array
     {
-        $difference = ['.', '..', '.gitignore', 'example.csv'];
+        $difference = [
+            '.',
+            '..',
+            '.gitignore',
+            'example.csv'
+        ];
         return array_diff(scandir($path), $difference);
     }
 
-    private function setManager(ObjectManager $manager) : void
+    private function setManager(ObjectManager $manager): void
     {
         $this->manager = $manager;
     }
 
-    private function getManager() : ObjectManager
+    private function getManager(): ObjectManager
     {
         return $this->manager;
     }
 
-    private function createLogfileResult(int $start, int $memory) : void
+    private function createLogfileResult(int $start, int $memory): void
     {
         $currentDate = date('d-m-Y H:i:s');
         $startDate = date('d-m-Y H:i:s', $start);
@@ -167,14 +169,6 @@ class ImagesPullerCommand extends Command
         $riseMemory = $currentMemory - $startMemory;
         $peakMemory = memory_get_peak_usage();
 
-        file_put_contents(
-            $this->directories->getLogfilePath(),
-            "Symfony command: ImagesPuller\n".
-            "Процесс завершён добавления изображений завершён\n".
-            "\tВремя начала: $startDate, Время завершения: $currentDate\n".
-            "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n".
-            "\tПик использования памяти: $peakMemory\n",
-            FILE_APPEND
-        );
+        file_put_contents($this->directories->getLogfilePath(), "Symfony command: ImagesPuller\n" . "Процесс завершён добавления изображений завершён\n" . "\tВремя начала: $startDate, Время завершения: $currentDate\n" . "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n" . "\tПик использования памяти: $peakMemory\n", FILE_APPEND);
     }
 }

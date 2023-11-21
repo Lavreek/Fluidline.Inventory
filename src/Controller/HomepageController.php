@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -8,6 +7,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class HomepageController extends AbstractController
 {
+
     #[Route('/', name: 'app_root')]
     public function root(): Response
     {
@@ -21,7 +21,7 @@ class HomepageController extends AbstractController
         $user = $this->getUser();
 
         return $this->render('homepage/index.html.twig', [
-            'inventory_user' => $user,
+            'inventory_user' => $user
         ]);
     }
 }

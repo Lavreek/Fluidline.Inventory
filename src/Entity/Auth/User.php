@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity\Auth;
 
 use App\Repository\Auth\UserRepository;
@@ -10,6 +9,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -22,6 +22,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $roles = [];
 
     /**
+     *
      * @var string The hashed password
      */
     #[ORM\Column]
@@ -55,6 +56,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
+     *
      * @see UserInterface
      */
     public function getRoles(): array
@@ -74,6 +76,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
+     *
      * @see PasswordAuthenticatedUserInterface
      */
     public function getPassword(): string
@@ -89,6 +92,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
+     *
      * @see UserInterface
      */
     public function eraseCredentials(): void

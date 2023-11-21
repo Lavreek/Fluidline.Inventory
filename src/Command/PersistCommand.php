@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Command;
 
 use App\Command\Helper\Directory;
@@ -13,29 +12,33 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(
-    name: 'Persist',
-    description: 'Добавление продукции в систему Inventory',
-)]
-
-class PersistCommand extends Command
+#[AsCommand(name: 'Persist', description: 'Добавление продукции в систему Inventory')]
+class 
+PersistCommand extends Command
 {
+
     const max_memory_limit = '1024M';
 
     private Directory $directories;
 
-    /** @var array $images Объект, который корректирует сериализованные данные.
-     * Работает относительно изображений продукции в сериализованных данных
+    /**
+     *
+     * @var array $images Объект, который корректирует сериализованные данные.
+     *      Работает относительно изображений продукции в сериализованных данных
      */
     private array $images;
 
-    /** @var array $prices Объект, который корректирует сериализованные данные.
-     * Работает относительно цен на продукцию в сериализованных данных
+    /**
+     *
+     * @var array $prices Объект, который корректирует сериализованные данные.
+     *      Работает относительно цен на продукцию в сериализованных данных
      */
     private array $prices;
 
-    /** @var array $models Объект, который корректирует сериализованные данные.
-     * Работает относительно моделей продукции в сериализованных данных
+    /**
+     *
+     * @var array $models Объект, который корректирует сериализованные данные.
+     *      Работает относительно моделей продукции в сериализованных данных
      */
     private array $models;
 
@@ -56,23 +59,23 @@ class PersistCommand extends Command
         return $this->$variable;
     }
 
-    private function setManager(ObjectManager $manager) : void
+    private function setManager(ObjectManager $manager): void
     {
         $this->entityManager = $manager;
     }
 
-    private function getManager() : ObjectManager
+    private function getManager(): ObjectManager
     {
         return $this->entityManager;
     }
 
-    private function writeToFile($path, $content) : void
+    private function writeToFile($path, $content): void
     {
-        if (!$this->directories->checkPath(dirname($path))) {
+        if (! $this->directories->checkPath(dirname($path))) {
             $this->directories->createDirectory(dirname($path));
         }
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             touch($path);
         }
 
@@ -81,13 +84,17 @@ class PersistCommand extends Command
         fclose($f);
     }
 
-    private function getFiles(string $path) : array
+    private function getFiles(string $path): array
     {
-        $difference = ['..', '.', '.gitignore'];
+        $difference = [
+            '..',
+            '.',
+            '.gitignore'
+        ];
         return array_diff(scandir($path), $difference);
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         ini_set('memory_limit', self::max_memory_limit);
         $executeScriptMemory = memory_get_usage();
@@ -102,7 +109,7 @@ class PersistCommand extends Command
         if (count($serializeSerials) > 0) {
             $serialFolder = array_shift($serializeSerials);
 
-            $serializeSerialsPath = $serializePath . $serialFolder ."/";
+            $serializeSerialsPath = $serializePath . $serialFolder . "/";
 
             $serialFiles = $this->getFiles($serializeSerialsPath);
 
@@ -118,7 +125,6 @@ class PersistCommand extends Command
                 if (isset($match[1][0])) {
                     $serial = $match[1][0];
                     echo "\nFound parent serial: $serial";
-
                 } else {
                     $serial = $serialFolder;
                 }
@@ -131,7 +137,7 @@ class PersistCommand extends Command
                 /** @var Inventory[] $serializeData */
                 $serializeData = unserialize(stream_get_contents($f));
 
-                for ($i = 0; $i < count($serializeData); $i++) {
+                for ($i = 0; $i < count($serializeData); $i ++) {
                     if ($serializeData[$i]->getSerial() != $serial) {
                         $serializeData[$i]->setSerial($serial);
                     }
@@ -144,7 +150,6 @@ class PersistCommand extends Command
                     echo "\n In $serial entities added. \n";
 
                     $entityManager->clear();
-
                 } catch (\Exception | \Throwable $exception) {
                     if (isset($type)) {
                         $inventory->removeBySerialType($serial, $serializeData[$i]->getType());
@@ -152,12 +157,7 @@ class PersistCommand extends Command
 
                     $customMessage = "\nFlush error by $serialFolder in $filename\n";
 
-                    file_put_contents(
-                        $this->directories->getLogfilePath(),
-                        "Symfony command: Persist\n".
-                        $customMessage . $exception->getMessage() ."\n",
-                        FILE_APPEND
-                    );
+                    file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
 
                     echo $customMessage;
 
@@ -170,11 +170,13 @@ class PersistCommand extends Command
                 $images = $this->getVariable('images');
                 $models = $this->getVariable('models');
 
-                for ($i = 0; $i < count($serializeData); $i++) {
+                for ($i = 0; $i < count($serializeData); $i ++) {
                     /** @var Inventory $code */
-                    $code = $inventory->findOneBy(['code' => $serializeData[$i]->getCode()]);
+                    $code = $inventory->findOneBy([
+                        'code' => $serializeData[$i]->getCode()
+                    ]);
 
-                    if (!is_null($code)) {
+                    if (! is_null($code)) {
                         $this->fillParameters($prices, $serial);
 
                         $pricehouse = new InventoryPricehouse();
@@ -185,8 +187,11 @@ class PersistCommand extends Command
 
                         if ($prices['exist'] !== 2) {
                             $prices['csv_content'] .= implode(';', [
-                                $code->getCode(), $pricehouse->getValue(), $pricehouse->getWarehouse(), $pricehouse->getCurrency()
-                            ]) ."\n";
+                                $code->getCode(),
+                                $pricehouse->getValue(),
+                                $pricehouse->getWarehouse(),
+                                $pricehouse->getCurrency()
+                            ]) . "\n";
                         }
 
                         $this->fillParameters($images, $serial);
@@ -199,16 +204,20 @@ class PersistCommand extends Command
 
                         if ($images['exist'] !== 2) {
                             $images['csv_content'] .= implode(';', [
-                                $code->getCode(), $code->getId(), $attachmenthouse->getImage()
-                            ]) ."\n";
+                                $code->getCode(),
+                                $code->getId(),
+                                $attachmenthouse->getImage()
+                            ]) . "\n";
                         }
 
                         $attachmenthouse->setModel("");
 
                         if ($models['exist'] !== 2) {
                             $models['csv_content'] .= implode(';', [
-                                $code->getCode(), $code->getId(), $attachmenthouse->getModel()
-                            ]) ."\n";
+                                $code->getCode(),
+                                $code->getId(),
+                                $attachmenthouse->getModel()
+                            ]) . "\n";
                         }
 
                         $attachmenthouse->setCode($code);
@@ -232,12 +241,7 @@ class PersistCommand extends Command
 
                     $customMessage = "\nFlush error by $serialFolder in $filename\n";
 
-                    file_put_contents(
-                        $this->directories->getLogfilePath(),
-                        "Symfony command: Persist\n".
-                        $customMessage . $exception->getMessage() ."\n",
-                        FILE_APPEND
-                    );
+                    file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
 
                     return Command::FAILURE;
                 }
@@ -257,12 +261,7 @@ class PersistCommand extends Command
                 echo "Другой процесс уже удерживает блокировку файла";
             }
 
-            file_put_contents(
-                $this->directories->getLogfilePath(),
-                "Symfony command: Persist\n".
-                "Другой процесс уже удерживает блокировку файла\n".
-                FILE_APPEND
-            );
+            file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . "Другой процесс уже удерживает блокировку файла\n" . FILE_APPEND);
         }
 
         return Command::SUCCESS;
@@ -283,11 +282,14 @@ class PersistCommand extends Command
 
     /**
      * Первоначальная настройка переменных, которые участвуют в процессе добавления продукции
+     *
      * @return void
      */
-    private function initialSetup() : void
+    private function initialSetup(): void
     {
-        $container = $this->getApplication()->getKernel()->getContainer();
+        $container = $this->getApplication()
+            ->getKernel()
+            ->getContainer();
 
         $this->directories->setProductsPath($container->getParameter('products'));
 
@@ -299,7 +301,7 @@ class PersistCommand extends Command
             'path' => $this->directories->getPricePath(),
             'csv_header' => "code;value;count;currency\n",
             'csv_content' => "",
-            'exist' => 0, // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
+            'exist' => 0 // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
         ]);
 
         // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Image)
@@ -307,7 +309,7 @@ class PersistCommand extends Command
             'path' => $this->directories->getImagePath(),
             'csv_header' => "code;code_id;image_path\n",
             'csv_content' => "",
-            'exist' => 0, // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
+            'exist' => 0 // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
         ]);
 
         // Создание объекта, который определяет назначения для сущности InventoryAttachmethouse (Model)
@@ -315,27 +317,26 @@ class PersistCommand extends Command
             'path' => $this->directories->getModelPath(),
             'csv_header' => "code;code_id;model_path\n",
             'csv_content' => "",
-            'exist' => 0, // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
+            'exist' => 0 // 0 - Отсутствует, 1 - Сгенерированные, 2 - Существует оригинал
         ]);
     }
 
-    private function startedFileExist($path, &$exist, &$content) : void
+    private function startedFileExist($path, &$exist, &$content): void
     {
-        $genPath = $path .".gen";
+        $genPath = $path . ".gen";
 
-        if (file_exists($path .".csv")) {
+        if (file_exists($path . ".csv")) {
             $exist = 2;
             if (file_exists($genPath)) {
                 unlink($genPath);
             }
-
         } elseif (file_exists($genPath)) {
             $exist = 1;
             $content = file_get_contents($genPath);
         }
     }
 
-    private function createLogfileResult(int $start, int $memory) : void
+    private function createLogfileResult(int $start, int $memory): void
     {
         $currentDate = date('d-m-Y H:i:s');
         $startDate = date('d-m-Y H:i:s', $start);
@@ -345,14 +346,6 @@ class PersistCommand extends Command
         $riseMemory = $currentMemory - $startMemory;
         $peakMemory = memory_get_peak_usage();
 
-        file_put_contents(
-            $this->directories->getLogfilePath(),
-            "Symfony command: Persist\n".
-            "Процесс добавления продукции завершён\n".
-            "\tВремя начала: $startDate, Время завершения: $currentDate\n".
-            "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n".
-            "\tПик использования памяти: $peakMemory\n",
-            FILE_APPEND
-        );
+        file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . "Процесс добавления продукции завершён\n" . "\tВремя начала: $startDate, Время завершения: $currentDate\n" . "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n" . "\tПик использования памяти: $peakMemory\n", FILE_APPEND);
     }
 }

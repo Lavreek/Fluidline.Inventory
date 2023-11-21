@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Auth;
 
 use App\Form\Auth\LoginType;
@@ -11,6 +10,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class LoginController extends AbstractController
 {
+
     #[Route('/auth/login', name: 'auth_login')]
     public function login(AuthenticationUtils $authenticationUtils, Request $request): Response
     {
@@ -26,7 +26,7 @@ class LoginController extends AbstractController
         $renderOptions = [
             'login_form' => $login_form,
             'last_username' => $authenticationUtils->getLastUsername(),
-            'error' => $authenticationUtils->getLastAuthenticationError(),
+            'error' => $authenticationUtils->getLastAuthenticationError()
         ];
 
         return $this->render('auth/login/index.html.twig', $renderOptions);

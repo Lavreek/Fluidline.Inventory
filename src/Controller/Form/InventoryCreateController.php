@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Form;
 
 use App\Entity\Inventory\Inventory;
@@ -17,11 +16,13 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryCreateController extends AbstractController
 {
+
     private string $uploadDirectory;
+
     private string $logfileDirectory;
 
     #[Route('/constructor/create', name: 'app_constructor_create')]
-    public function createInventory(Request $request, EntityManagerInterface $manager) : JsonResponse|RedirectResponse
+    public function createInventory(Request $request, EntityManagerInterface $manager): JsonResponse|RedirectResponse
     {
         ini_set('memory_limit', '512M');
 
@@ -63,13 +64,9 @@ class InventoryCreateController extends AbstractController
 
                 $chunkCount = 0;
                 foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {
-                    $this->serializeProducts(
-                        $chunk,
-                        $inventory_serial,
-                        "chunk-". $chunkIndex ."-". $inventory_file->getClientOriginalName()
-                    );
+                    $this->serializeProducts($chunk, $inventory_serial, "chunk-" . $chunkIndex . "-" . $inventory_file->getClientOriginalName());
 
-                    $chunkCount++;
+                    $chunkCount ++;
                 }
 
                 /** @var string $imageSerialPath | Путь к файлу изображений серии */
@@ -96,22 +93,26 @@ class InventoryCreateController extends AbstractController
                     unlink($modelFile);
                 }
 
-                register_shutdown_function([$this, 'inventoryRemains'], $chunkCount);
-
-            } catch (\Exception | \Throwable) { }
+                register_shutdown_function([
+                    $this,
+                    'inventoryRemains'
+                ], $chunkCount);
+            } catch (\Exception | \Throwable) {}
 
             return $this->redirectToRoute('app_home');
         }
 
-        return new JsonResponse(['Форма не прошла валидацию в системе']);
+        return new JsonResponse([
+            'Форма не прошла валидацию в системе'
+        ]);
     }
 
-    private function serializeProducts($products, $serial, $filename) : void
+    private function serializeProducts($products, $serial, $filename): void
     {
         $serializePath = $this->getParameter('inventory_serialize_directory');
-        $serialSerializePath =  $serializePath . "/" . $serial . "/";
+        $serialSerializePath = $serializePath . "/" . $serial . "/";
 
-        if (!is_dir($serialSerializePath)) {
+        if (! is_dir($serialSerializePath)) {
             mkdir($serialSerializePath, recursive: true);
         }
 
@@ -122,29 +123,25 @@ class InventoryCreateController extends AbstractController
     {
         $logFile = $this->getLogfileDirectory();
 
-        file_put_contents($logFile,
-            "\n Inventory Remains:" .
-            "\n\t Memory at end: ". memory_get_usage() .
-            "\n\t Chunks added: $count\n"
-        );
+        file_put_contents($logFile, "\n Inventory Remains:" . "\n\t Memory at end: " . memory_get_usage() . "\n\t Chunks added: $count\n");
     }
 
-    private function getUploadDirectory() : string
+    private function getUploadDirectory(): string
     {
         return $this->uploadDirectory;
     }
 
-    private function setUploadDirectory($path) : void
+    private function setUploadDirectory($path): void
     {
         $this->uploadDirectory = $path;
     }
 
-    private function getLogfileDirectory() : string
+    private function getLogfileDirectory(): string
     {
         return $this->logfileDirectory;
     }
 
-    private function setLogfileDirectory($path) : void
+    private function setLogfileDirectory($path): void
     {
         $this->logfileDirectory = $path;
     }

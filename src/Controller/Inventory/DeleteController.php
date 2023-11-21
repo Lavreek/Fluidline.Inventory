@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Inventory;
 
 use App\Entity\Inventory\Inventory;
@@ -13,6 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class DeleteController extends AbstractController
 {
+
     #[Route('/remove/by/serial', name: 'app_remove_by_serial')]
     public function bySerial(Request $request, ManagerRegistry $registry): Response
     {
@@ -28,7 +28,7 @@ class DeleteController extends AbstractController
         }
 
         return $this->render('inventory/remover/index.html.twig', [
-            'remove_form' => $removeForm->createView(),
+            'remove_form' => $removeForm->createView()
         ]);
     }
 

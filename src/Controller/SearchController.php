@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller;
 
 use App\Entity\Inventory\Inventory;
@@ -13,8 +12,11 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class SearchController extends AbstractController
 {
-    #[Route('/search', name: 'app_search', methods: ['POST'])]
-    public function search(Request $request, ManagerRegistry $registry) : JsonResponse
+
+    #[Route('/search', name: 'app_search', methods: [
+        'POST'
+    ])]
+    public function search(Request $request, ManagerRegistry $registry): JsonResponse
     {
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $registry->getRepository(Inventory::class);
@@ -23,14 +25,20 @@ class SearchController extends AbstractController
 
         if (count($requestData) > 0) {
             $search = $inventoryRepository->codeSearch($requestData['code']);
-            return new JsonResponse(['search' => $search]);
+            return new JsonResponse([
+                'search' => $search
+            ]);
         }
 
-        return new JsonResponse(['По заданному запросу ничего не найдено.']);
+        return new JsonResponse([
+            'По заданному запросу ничего не найдено.'
+        ]);
     }
 
-    #[Route('/search/full', name: 'app_search_full', methods: ['POST'])]
-    public function searchCards(Request $request, ManagerRegistry $registry) : JsonResponse
+    #[Route('/search/full', name: 'app_search_full', methods: [
+        'POST'
+    ])]
+    public function searchCards(Request $request, ManagerRegistry $registry): JsonResponse
     {
         $requestData = $request->request->all();
 
@@ -43,15 +51,12 @@ class SearchController extends AbstractController
             if (isset($requestData['limit'])) {
                 if ($requestData['limit'] < 25) {
                     $limit = $requestData['limit'];
-
                 } else {
                     $limit = 25;
                 }
             }
 
-            $search = Serializer::serializeElement(
-                $inventoryRepository->productsSearch($requestData['code'], $limit)
-            );
+            $search = Serializer::serializeElement($inventoryRepository->productsSearch($requestData['code'], $limit));
 
             $full = [];
 
@@ -60,9 +65,13 @@ class SearchController extends AbstractController
                 $full[] = $item;
             }
 
-            return new JsonResponse(['search' => $full]);
+            return new JsonResponse([
+                'search' => $full
+            ]);
         }
 
-        return new JsonResponse(['По заданному запросу ничего не найдено.']);
+        return new JsonResponse([
+            'По заданному запросу ничего не найдено.'
+        ]);
     }
 }

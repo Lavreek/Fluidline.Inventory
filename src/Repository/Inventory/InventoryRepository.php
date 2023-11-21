@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Repository\Inventory;
 
 use App\Entity\Inventory\Inventory;
@@ -12,67 +11,64 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ *
  * @extends ServiceEntityRepository<Inventory>
  *
  * @method Inventory|null find($id, $lockMode = null, $lockVersion = null)
  * @method Inventory|null findOneBy(array $criteria, array $orderBy = null)
- * @method Inventory[]    findAll()
- * @method Inventory[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Inventory[] findAll()
+ * @method Inventory[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class InventoryRepository extends ServiceEntityRepository
 {
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Inventory::class);
     }
 
-    public function codeSearch(string $code) : array|bool|null
+    public function codeSearch(string $code): array|bool|null
     {
         try {
             $query = $this->createQueryBuilder('i');
 
-            return $query
-                ->select("i.code", "i.serial")
-                ->where($query->expr()->like("i.code", ':code'))
+            return $query->select("i.code", "i.serial")
+                ->where($query->expr()
+                ->like("i.code", ':code'))
                 ->setParameter('code', "%$code%")
                 ->setMaxResults(10)
                 ->getQuery()
-                ->getResult()
-            ;
-
+                ->getResult();
         } catch (NoResultException) {
             return false;
-
         } catch (NonUniqueResultException) {
             return null;
         }
     }
 
-    public function productsSearch(string $code, int $limit) : array|bool|null
+    public function productsSearch(string $code, int $limit): array|bool|null
     {
         try {
             $query = $this->createQueryBuilder('i');
 
-            return $query
-                ->where($query->expr()->like("i.code", ':code'))
+            return $query->where($query->expr()
+                ->like("i.code", ':code'))
                 ->setParameter('code', "%$code%")
                 ->setMaxResults($limit)
                 ->getQuery()
-                ->getResult()
-                ;
-
+                ->getResult();
         } catch (NoResultException) {
             return false;
-
         } catch (NonUniqueResultException) {
             return null;
         }
     }
 
     /**
+     *
      * @return Inventory[]|null Returns an array of Inventory objects
      */
-    public function getSerialExist(string $type, string $serial) : array|bool|null
+    public function getSerialExist(string $type, string $serial): array|bool|null
     {
         try {
             return $this->createQueryBuilder('i')
@@ -85,16 +81,15 @@ class InventoryRepository extends ServiceEntityRepository
                 ->setMaxResults(1)
                 ->getQuery()
                 ->getSingleResult();
-
         } catch (NoResultException) {
             return false;
-
         } catch (NonUniqueResultException) {
             return null;
         }
     }
 
     /**
+     *
      * @return Inventory[] Returns an array of Inventory objects
      */
     public function getDistinctTypes(): array
@@ -103,11 +98,11 @@ class InventoryRepository extends ServiceEntityRepository
             ->distinct()
             ->select('i.type')
             ->getQuery()
-            ->getResult()
-            ;
+            ->getResult();
     }
 
     /**
+     *
      * @return Inventory[] Returns an array of Inventory objects
      */
     public function getDistinctTypeSerials(string $type): array
@@ -118,11 +113,11 @@ class InventoryRepository extends ServiceEntityRepository
             ->where("i.type = :type")
             ->setParameter('type', $type)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     /**
+     *
      * @return Inventory[] Returns an array of Inventory objects
      */
     public function findBySerial($serial): array
@@ -133,11 +128,11 @@ class InventoryRepository extends ServiceEntityRepository
             ->setParameter('serial', $serial)
             ->setMaxResults(100)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     /**
+     *
      * @return Inventory[] Returns an array of Inventory objects
      */
     public function findByOrder($serial, $order, $limit): array
@@ -149,12 +144,10 @@ class InventoryRepository extends ServiceEntityRepository
 
         $this->setOrderParameters($query, $order);
 
-        return $query
-            ->orderBy('i.id', 'ASC')
+        return $query->orderBy('i.id', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     private function setOrderParameters(QueryBuilder &$query, $order)
@@ -163,13 +156,13 @@ class InventoryRepository extends ServiceEntityRepository
 
         $havingKeys = $havingValues = [];
 
-        if (!is_null($order)) {
+        if (! is_null($order)) {
             foreach ($order as $item) {
-                if (!in_array($item['key'], $havingKeys)) {
+                if (! in_array($item['key'], $havingKeys)) {
                     $havingKeys[] = $item['key'];
                 }
 
-                if (!in_array($item['value'], $havingValues)) {
+                if (! in_array($item['value'], $havingValues)) {
                     $havingValues[] = $item['value'];
                 }
             }
@@ -178,14 +171,14 @@ class InventoryRepository extends ServiceEntityRepository
         /** @var InventoryParamhouseRepository $paramhouse */
         $paramhouse = $manager->getRepository(InventoryParamhouse::class);
 
-        if (!empty($havingKeys) and !empty($havingValues)) {
+        if (! empty($havingKeys) and ! empty($havingValues)) {
             $ids = $paramhouse->findByParameters($havingKeys, $havingValues);
 
             $query->andWhere("i.id IN ($ids)");
         }
     }
 
-    public function removeBySerialType(string $serial, string $type) : void
+    public function removeBySerialType(string $serial, string $type): void
     {
         $this->createQueryBuilder('i')
             ->delete(Inventory::class, 'i')
@@ -194,11 +187,11 @@ class InventoryRepository extends ServiceEntityRepository
             ->andWhere('i.type = :t')
             ->setParameter('t', $type)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     /**
+     *
      * @return Inventory[] Returns an array of Inventory objects
      */
     public function getSerialFilter($serial): array
@@ -211,32 +204,31 @@ class InventoryRepository extends ServiceEntityRepository
             ->innerJoin(InventoryParamhouse::class, 'ip', Expr\Join::WITH, 'i.id = ip.code')
             ->orderBy('ip.name', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
-//    /**
-//     * @return Inventory[] Returns an array of Inventory objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('i.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    // /**
+    // * @return Inventory[] Returns an array of Inventory objects
+    // */
+    // public function findByExampleField($value): array
+    // {
+    // return $this->createQueryBuilder('i')
+    // ->andWhere('i.exampleField = :val')
+    // ->setParameter('val', $value)
+    // ->orderBy('i.id', 'ASC')
+    // ->setMaxResults(10)
+    // ->getQuery()
+    // ->getResult()
+    // ;
+    // }
 
-//    public function findOneBySomeField($value): ?Inventory
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    // public function findOneBySomeField($value): ?Inventory
+    // {
+    // return $this->createQueryBuilder('i')
+    // ->andWhere('i.exampleField = :val')
+    // ->setParameter('val', $value)
+    // ->getQuery()
+    // ->getOneOrNullResult()
+    // ;
+    // }
 }

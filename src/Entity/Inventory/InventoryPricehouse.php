@@ -1,14 +1,16 @@
 <?php
-
 namespace App\Entity\Inventory;
 
 use App\Repository\Inventory\InventoryPricehouseRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryPricehouseRepository::class)]
-#[ORM\Index(columns: ['value'], name: 'idx_value')]
+#[ORM\Index(columns: [
+    'value'
+], name: 'idx_value')]
 class InventoryPricehouse
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -23,7 +25,9 @@ class InventoryPricehouse
     #[ORM\Column]
     private ?int $warehouse = null;
 
-    #[ORM\OneToOne(inversedBy: 'price', cascade: ['persist'])]
+    #[ORM\OneToOne(inversedBy: 'price', cascade: [
+        'persist'
+    ])]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?Inventory $code = null;
 

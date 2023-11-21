@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Form\Remover;
 
 use Symfony\Component\Form\AbstractType;
@@ -12,31 +11,29 @@ use Symfony\Component\Validator\Constraints\File;
 
 class BySerialType extends AbstractType
 {
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
-            ->add('type', TextType::class, [
-                'label' => 'Тип ресурса',
-                'attr' => [
-                    'placeholder' => 'например, Фитинги',
-                ]
-            ])
+        $builder->add('type', TextType::class, [
+            'label' => 'Тип ресурса',
+            'attr' => [
+                'placeholder' => 'например, Фитинги'
+            ]
+        ])
             ->add('serial', TextType::class, [
-                'label' => 'Серия',
-                'attr' => [
-                    'placeholder' => 'например, CUA'
-                ]
-            ])
+            'label' => 'Серия',
+            'attr' => [
+                'placeholder' => 'например, CUA'
+            ]
+        ])
             ->add('submit', SubmitType::class, [
-                'label' => 'Удалить'
-            ])
-        ;
+            'label' => 'Удалить'
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults([
-            // Configure your form options here
+        $resolver->setDefaults([ // Configure your form options here
         ]);
     }
 }

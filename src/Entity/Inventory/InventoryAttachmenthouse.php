@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity\Inventory;
 
 use App\Repository\Inventory\InventoryAttachmenthouseRepository;
@@ -8,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: InventoryAttachmenthouseRepository::class)]
 class InventoryAttachmenthouse
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -19,7 +19,9 @@ class InventoryAttachmenthouse
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $model = null;
 
-    #[ORM\OneToOne(inversedBy: 'attachments', cascade: ['persist'])]
+    #[ORM\OneToOne(inversedBy: 'attachments', cascade: [
+        'persist'
+    ])]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?Inventory $code = null;
 

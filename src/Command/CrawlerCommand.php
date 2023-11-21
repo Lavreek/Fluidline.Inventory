@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Command;
 
 use App\Command\Helper\Directory;
@@ -16,21 +15,23 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- *     C помощью продукции созданной в github.com/Lavreek/Fluidline.InventoryProducts происходит обход всех каталогов
+ * C помощью продукции созданной в github.com/Lavreek/Fluidline.InventoryProducts происходит обход всех каталогов
  * с продукцией, чтобы таким образом создать сериализацию, чтобы повысить производительность, а также
- * сократить потребление памяти. Ведь приложение создано для работы на виртуальном хостинге.
+ * сократить потребление памяти.
+ * Ведь приложение создано для работы на виртуальном хостинге.
  */
-
-#[AsCommand(
-    name: 'Crawler',
-    description: 'Создание сериализованных образов продукции, как сущности "Inventory"',
-)]
+#[AsCommand(name: 'Crawler', description: 'Создание сериализованных образов продукции, как сущности "Inventory"')]
 final class CrawlerCommand extends Command
 {
-    /** Ограничение выставляемое процессу при работе на виртуальном хостинге */
+
+    /**
+     * Ограничение выставляемое процессу при работе на виртуальном хостинге
+     */
     const max_memory_limit = '1024M';
 
-    /** Около максимальное количество элементов способных поместиться в лимит памяти */
+    /**
+     * Около максимальное количество элементов способных поместиться в лимит памяти
+     */
     const max_products_count = 100000;
 
     private Directory $directories;
@@ -41,16 +42,12 @@ final class CrawlerCommand extends Command
 
     protected function configure(): void
     {
-        $this
-            ->addOption(
-                'file', null, InputOption::VALUE_OPTIONAL,
-                'Which file could be serialized?', ''
-            );
+        $this->addOption('file', null, InputOption::VALUE_OPTIONAL, 'Which file could be serialized?', '');
 
         $this->directories = new Directory();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         ini_set('memory_limit', self::max_memory_limit);
         $executeScriptMemory = memory_get_usage();
@@ -70,7 +67,7 @@ final class CrawlerCommand extends Command
 
             if (count($files) > 0) {
                 foreach ($files as $file) {
-                    if (!empty($forceFile)) {
+                    if (! empty($forceFile)) {
                         if ($file != $forceFile) {
                             continue;
                         }
@@ -84,17 +81,17 @@ final class CrawlerCommand extends Command
                         continue;
                     }
 
-                    if (is_dir($this->directories->getSerializePath()  . $serial)) {
+                    if (is_dir($this->directories->getSerializePath() . $serial)) {
                         // echo "Serial $serial already in queue.\n";
                         continue;
                     }
 
-                    if (file_exists($this->directories->getLocksPath() . $type ."/". $serial .".lock")) {
+                    if (file_exists($this->directories->getLocksPath() . $type . "/" . $serial . ".lock")) {
                         // echo "Serial $serial lock file exist.\n";
                         continue;
                     }
 
-                    if (file_exists($this->directories->getLocksPath() . $type ."/". $serial .".skip")) {
+                    if (file_exists($this->directories->getLocksPath() . $type . "/" . $serial . ".skip")) {
                         // echo "Serial $serial skipped.\n";
                         continue;
                     }
@@ -121,17 +118,13 @@ final class CrawlerCommand extends Command
 
                     try {
                         foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {
-                            $filename = $chunkIndex ."-". $file;
+                            $filename = $chunkIndex . "-" . $file;
                             $this->serializeProducts($chunk, $serial, $filename);
                         }
-
                     } catch (\Exception | \Throwable $exception) {
                         $customMessage = "\n Serialize error in $serial file\n";
 
-                        file_put_contents(
-                            $this->directories->getLogfilePath(),
-                            $customMessage . $exception->getMessage() ."\n"
-                        );
+                        file_put_contents($this->directories->getLogfilePath(), $customMessage . $exception->getMessage() . "\n");
 
                         echo $customMessage;
 
@@ -142,13 +135,13 @@ final class CrawlerCommand extends Command
 
                     echo "\n$serial added.";
 
-                    $lockfile = $this->directories->getLocksPath() . $type ."/". $serial .".lock";
+                    $lockfile = $this->directories->getLocksPath() . $type . "/" . $serial . ".lock";
 
-                    if (!$this->directories->checkPath(dirname($lockfile))) {
+                    if (! $this->directories->checkPath(dirname($lockfile))) {
                         $this->directories->createDirectory(dirname($lockfile));
                     }
 
-                    if (!file_exists($lockfile)) {
+                    if (! file_exists($lockfile)) {
                         touch($lockfile);
                     }
 
@@ -165,7 +158,9 @@ final class CrawlerCommand extends Command
     private function initialSettings()
     {
         /** @var $container - Контейнер приложения Symfony */
-        $container = $this->getApplication()->getKernel()->getContainer();
+        $container = $this->getApplication()
+            ->getKernel()
+            ->getContainer();
 
         /** @var Registry $doctrineRegistry */
         $doctrineRegistry = $container->get('doctrine');
@@ -174,7 +169,7 @@ final class CrawlerCommand extends Command
         $this->directories->setProductsPath($container->getParameter('products'));
     }
 
-    private function removeSerial(string $type, string $serial) : void
+    private function removeSerial(string $type, string $serial): void
     {
         $entityManager = $this->getManager();
 
@@ -184,46 +179,56 @@ final class CrawlerCommand extends Command
         $inventoryRepository->removeBySerialType($serial, $type);
     }
 
-    private function getFiles($path) : array
+    private function getFiles($path): array
     {
-        $difference = ['.', '..', '.gitignore'];
+        $difference = [
+            '.',
+            '..',
+            '.gitignore'
+        ];
         return array_diff(scandir($path), $difference);
     }
 
-    private function serializeProducts($products, $serial, $filename) : void
+    private function serializeProducts($products, $serial, $filename): void
     {
-        $serialSerializePath =  $this->directories->getSerializePath() ."/$serial/";
+        $serialSerializePath = $this->directories->getSerializePath() . "/$serial/";
 
-        if (!is_dir($serialSerializePath)) {
+        if (! is_dir($serialSerializePath)) {
             mkdir($serialSerializePath, recursive: true);
         }
 
         file_put_contents($serialSerializePath . $filename . ".serial", serialize($products));
     }
 
-    /** @deprecated  */
-    private function setContainer(mixed $container) : void
+    /**
+     *
+     * @deprecated
+     */
+    private function setContainer(mixed $container): void
     {
         $this->container = $container;
     }
 
-    /** @deprecated  */
-    private function getContainer() : string
+    /**
+     *
+     * @deprecated
+     */
+    private function getContainer(): string
     {
         return $this->container;
     }
 
-    private function setManager(ObjectManager $registry) : void
+    private function setManager(ObjectManager $registry): void
     {
         $this->manager = $registry;
     }
 
-    private function getManager() : ObjectManager
+    private function getManager(): ObjectManager
     {
         return $this->manager;
     }
 
-    private function createLogfileResult(int $start, int $memory) : void
+    private function createLogfileResult(int $start, int $memory): void
     {
         $currentDate = date('d-m-Y H:i:s');
         $startDate = date('d-m-Y H:i:s', $start);
@@ -233,14 +238,6 @@ final class CrawlerCommand extends Command
         $riseMemory = $currentMemory - $startMemory;
         $peakMemory = memory_get_peak_usage();
 
-        file_put_contents(
-            $this->directories->getLogfilePath(),
-            "Symfony command: ImagesPuller\n".
-            "Процесс завершён добавления изображений завершён\n".
-            "\tВремя начала: $startDate, Время завершения: $currentDate\n".
-            "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n".
-            "\tПик использования памяти: $peakMemory\n",
-            FILE_APPEND
-        );
+        file_put_contents($this->directories->getLogfilePath(), "Symfony command: ImagesPuller\n" . "Процесс завершён добавления изображений завершён\n" . "\tВремя начала: $startDate, Время завершения: $currentDate\n" . "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n" . "\tПик использования памяти: $peakMemory\n", FILE_APPEND);
     }
 }

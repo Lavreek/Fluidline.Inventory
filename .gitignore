@@ -1,4 +1,5 @@
-/.idea
+/.buildpath
+/.project
 
 /public/products/*
 

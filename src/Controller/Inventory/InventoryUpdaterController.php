@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Inventory;
 
 use App\Form\Inventory\InventoryUpdateType;
@@ -12,11 +11,12 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryUpdaterController extends AbstractController
 {
+
     #[Route('/update/full/price', name: 'app_update_full_price')]
     public function updateFullPrice(): Response
     {
         return $this->render('inventory/updater/index.html.twig', [
-            'controller_name' => 'InventoryUpdaterController',
+            'controller_name' => 'InventoryUpdaterController'
         ]);
     }
 
@@ -25,7 +25,7 @@ class InventoryUpdaterController extends AbstractController
     {
         return $this->render('inventory/updater/index.html.twig', [
             'type' => 'Цен',
-            'serial' => $serial,
+            'serial' => $serial
         ]);
     }
 
@@ -33,7 +33,7 @@ class InventoryUpdaterController extends AbstractController
     public function updateFullModel(): Response
     {
         return $this->render('inventory/updater/index.html.twig', [
-            'controller_name' => 'InventoryUpdaterController',
+            'controller_name' => 'InventoryUpdaterController'
         ]);
     }
 
@@ -42,7 +42,7 @@ class InventoryUpdaterController extends AbstractController
     {
         return $this->render('inventory/updater/index.html.twig', [
             'type' => 'Моделей',
-            'serial' => $serial,
+            'serial' => $serial
         ]);
     }
 
@@ -50,7 +50,7 @@ class InventoryUpdaterController extends AbstractController
     public function updateFullImage(): Response
     {
         return $this->render('inventory/updater/index.html.twig', [
-            'controller_name' => 'InventoryUpdaterController',
+            'controller_name' => 'InventoryUpdaterController'
         ]);
     }
 
@@ -71,7 +71,7 @@ class InventoryUpdaterController extends AbstractController
 
             $updatePath = $this->getParameter('inventory_serialize_update_directory');
 
-            if (!is_dir($updatePath . $serial)) {
+            if (! is_dir($updatePath . $serial)) {
                 mkdir($updatePath . $serial, recursive: true);
             }
 
@@ -81,7 +81,7 @@ class InventoryUpdaterController extends AbstractController
         return $this->render('inventory/updater/serial.html.twig', [
             'type' => 'Изображений',
             'serial' => $serial,
-            'serial_form' => $imageForm,
+            'serial_form' => $imageForm
         ]);
     }
 }

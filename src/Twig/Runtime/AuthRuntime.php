@@ -1,17 +1,17 @@
 <?php
-
 namespace App\Twig\Runtime;
 
 use Twig\Extension\RuntimeExtensionInterface;
 
 class AuthRuntime implements RuntimeExtensionInterface
 {
+
     public function __construct()
     {
         // Inject dependencies if needed
     }
 
-    public function flipFormRow($form_row) : string
+    public function flipFormRow($form_row): string
     {
         preg_match('#(.*)(\<label.*<\/label\>)(\<input.*\/>)(.*)#u', $form_row, $match);
 

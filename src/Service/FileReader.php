@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Service;
 
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -8,6 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class FileReader
 {
+
     private array $products = [];
 
     private array $parameters = [];
@@ -24,67 +24,68 @@ class FileReader
 
     private UploadedFile|string $file;
 
-    public function setFileDelimiter($delimiter) : void
+    public function setFileDelimiter($delimiter): void
     {
         $this->fileDelimiter = $delimiter;
     }
 
-    public function getFileDelimiter() : string
+    public function getFileDelimiter(): string
     {
         return $this->fileDelimiter;
     }
 
-    public function setReadDirectory($readDirectory) : void
+    public function setReadDirectory($readDirectory): void
     {
         $this->readDirectory = $readDirectory;
     }
 
-    public function setFile($file) : void
+    public function setFile($file): void
     {
         $this->file = $file;
     }
 
-    public function getFile() : UploadedFile|string
+    public function getFile(): UploadedFile|string
     {
         return $this->file;
     }
 
-    public function getReadDirectory() : string
+    public function getReadDirectory(): string
     {
         return $this->readDirectory;
     }
 
-    public function saveFile() : null|JsonResponse
+    public function saveFile(): null|JsonResponse
     {
         $file = $this->file;
 
         try {
-            file_put_contents(
-                $this->getReadDirectory() . $file->getClientOriginalName(),
-                $file->getContent()
-            );
+            file_put_contents($this->getReadDirectory() . $file->getClientOriginalName(), $file->getContent());
 
             return null;
         } catch (FileException $e) {
-            return new JsonResponse(['error' => "Ошибка при загрузке файла.", 'exception' => $e->getMessage()]);
+            return new JsonResponse([
+                'error' => "Ошибка при загрузке файла.",
+                'exception' => $e->getMessage()
+            ]);
         }
     }
 
     public function getCondition($conditionType, $parameterValue, $neededValue)
     {
         switch ($conditionType) {
-            case '==' : {
-                if ($parameterValue == $neededValue) {
-                    return true;
+            case '==':
+                {
+                    if ($parameterValue == $neededValue) {
+                        return true;
+                    }
+                    break;
                 }
-                break;
-            }
         }
 
         return false;
     }
 
-    public function checkCondition($productParameters, $conditionSet) : ?bool
+    public function checkCondition($productParameters, $conditionSet): ?bool
     {
         unset($conditionSet['result']);
 
@@ -128,7 +129,7 @@ class FileReader
         return null;
     }
 
-    private function getParameters($values) : void
+    private function getParameters($values): void
     {
         $products = &$this->products;
         $parameters = &$this->parameters;
@@ -137,17 +138,16 @@ class FileReader
             $key = key($values);
             $current = current($values);
 
-            if (!empty($products)) {
+            if (! empty($products)) {
                 $productsInterim = [];
 
                 foreach ($products as $product) {
-                    for ($i = 0; $i < count($current); $i++) {
+                    for ($i = 0; $i < count($current); $i ++) {
                         $productsInterim[] = $product;
                         $position = count($productsInterim);
 
                         if ($current[$i] !== '-') {
-                            $productsInterim[$position - 1]['code'] =
-                                $productsInterim[$position - 1]['code'] .'-'. $current[$i];
+                            $productsInterim[$position - 1]['code'] = $productsInterim[$position - 1]['code'] . '-' . $current[$i];
                         }
 
                         if (isset($parameters[$key])) {
@@ -157,7 +157,7 @@ class FileReader
                                 if (isset($parameters[$key][$groupKey][$i])) {
                                     $group = [
                                         'name' => $groupKey,
-                                        'value' => trim($parameters[$key][$groupKey][$i], "\""),
+                                        'value' => trim($parameters[$key][$groupKey][$i], "\"")
                                     ];
 
                                     if (isset($description[$groupKey])) {
@@ -173,7 +173,7 @@ class FileReader
 
                 $products = $productsInterim;
             } else {
-                for ($i = 0; $i < count($current); $i++) {
+                for ($i = 0; $i < count($current); $i ++) {
                     $products[$i]['code'] = $current[$i];
                     $products[$i]['parameters'] = [];
 
@@ -183,10 +183,10 @@ class FileReader
                         foreach ($parameters[$key] as $groupKey => $groupValue) {
                             $group = [
                                 'name' => $groupKey,
-                                'value' => trim($parameters[$key][$groupKey][$i], "\""),
+                                'value' => trim($parameters[$key][$groupKey][$i], "\"")
                             ];
 
-                            if (!is_null($description)) {
+                            if (! is_null($description)) {
                                 $group['description'] = $description;
                             }
 
@@ -201,7 +201,7 @@ class FileReader
         }
     }
 
-    private function getCSVValues($file) : array
+    private function getCSVValues($file): array
     {
         $row = 0;
 
@@ -209,11 +209,11 @@ class FileReader
 
         $delimiter = false;
         $tries = 0;
-        while (!$delimiter) {
-            $prev = stream_get_contents($file,1);
+        while (! $delimiter) {
+            $prev = stream_get_contents($file, 1);
 
             if ($prev == '#') {
-                $delimiter = stream_get_contents($file,1);
+                $delimiter = stream_get_contents($file, 1);
                 $this->setFileDelimiter($delimiter);
             }
 
@@ -221,13 +221,13 @@ class FileReader
                 return [];
             }
 
-            $tries++;
+            $tries ++;
         }
 
         rewind($file);
 
         while ($data = fgetcsv($file, separator: $this->getFileDelimiter())) {
-            if (!preg_match('#\##', $data[0]) and $row === 0) {
+            if (! preg_match('#\##', $data[0]) and $row === 0) {
                 throw new \Exception("\nFirst column must be empty with heading \"#\"\n");
             }
 
@@ -241,47 +241,50 @@ class FileReader
                     $columnData = trim($columnData, "\"");
 
                     if (preg_match('#Параметр:(.*)#u', $columnData, $match)) {
-                        [$parameter, $name] = explode(':', $match[1], 2);
+                        [
+                            $parameter,
+                            $name
+                        ] = explode(':', $match[1], 2);
                         $this->parameters[$parameter][$name] = [];
                         $position['parameters'][] = $columnKey;
-
                     } elseif (preg_match('#Условное обозначение:(.*)#u', $columnData, $match)) {
                         $position['naming'][] = $columnKey;
-
                     } elseif (preg_match('#Условие:(.*)#u', $columnData, $match)) {
                         $position['conditions'][] = $columnKey;
                         $this->conditions[$match[1]] = [];
-
                     } elseif (preg_match('#Особый параметр:(.*)#u', $columnData, $match)) {
                         $position['special'][] = $columnKey;
                         $this->special[$match[1]] = [];
-
                     } else {
-                        $values += [$columnData => []];
+                        $values += [
+                            $columnData => []
+                        ];
                         $position['values'][] = $columnKey;
                     }
-
                 }
             } else {
                 foreach ($data as $columnKey => $columnData) {
-                    if (!empty($columnData)) {
+                    if (! empty($columnData)) {
                         $columnKey = trim($columnKey, "\"");
                         $columnData = trim($columnData, "\"");
 
                         if (in_array($columnKey, $position['values'])) {
                             $values[$header[$columnKey]][] = $columnData;
-
                         } elseif (in_array($columnKey, $position['parameters'])) {
                             preg_match('#Параметр:(.*)#u', $header[$columnKey], $match);
-                            [$parameter, $name] = explode(':', $match[1], 2);
+                            [
+                                $parameter,
+                                $name
+                            ] = explode(':', $match[1], 2);
                             $this->parameters[$parameter][$name][] = $columnData;
-
                         } elseif (in_array($columnKey, $position['naming'])) {
                             preg_match('#Условное обозначение:(.*)#u', $header[$columnKey], $match);
-                            [$columnName, $columnTarget] = explode(":", $match[1], 2);
+                            [
+                                $columnName,
+                                $columnTarget
+                            ] = explode(":", $match[1], 2);
                             $this->naming[$columnName][$columnTarget][] = $columnData;
-
-                        }  elseif (in_array($columnKey, $position['conditions'])) {
+                        } elseif (in_array($columnKey, $position['conditions'])) {
                             preg_match('#ЕСЛИ\((.+)\)=\((.+)\)#u', $columnData, $match);
 
                             $exp = explode(":", $header[$columnKey], 2);
@@ -304,13 +307,13 @@ class FileReader
                 }
             }
 
-            $row++;
+            $row ++;
         }
 
         return $values;
     }
 
-    public function executeCreate() : array
+    public function executeCreate(): array
     {
         $directory = $this->getReadDirectory();
 
@@ -318,14 +321,11 @@ class FileReader
 
         if (gettype($filename) === 'string') {
             $file = fopen($directory . $filename, 'r');
-
         } else {
             $file = fopen($directory . $filename->getClientOriginalName(), 'r');
         }
 
-        $this->getParameters(
-            $this->getCSVValues($file)
-        );
+        $this->getParameters($this->getCSVValues($file));
 
         // TODO: SPECIAL MODIFICATIONS "$this->special"
 
@@ -336,7 +336,7 @@ class FileReader
                 if ($condition) {
                     $this->products[$productsIndex]['parameters'][] = [
                         'name' => $conditionKey,
-                        'value' => $conditionSet['result'],
+                        'value' => $conditionSet['result']
                     ];
                 }
             }
@@ -345,12 +345,14 @@ class FileReader
         return $this->products;
     }
 
-    private function replaceNBSP($content) : string
+    private function replaceNBSP($content): string
     {
-        return str_replace(['﻿'], '', $content);
+        return str_replace([
+            '﻿'
+        ], '', $content);
     }
 
-    public function getCSVPrices($content) : array
+    public function getCSVPrices($content): array
     {
         $content = $this->replaceNBSP($content);
 
@@ -361,7 +363,7 @@ class FileReader
         foreach ($lines as $line) {
             $data = explode(';', $line);
 
-            if (!empty($data)) {
+            if (! empty($data)) {
                 $parameters = [];
 
                 if (isset($data[0])) {
@@ -375,19 +377,19 @@ class FileReader
                 $parameters['currency'] = '$';
 
                 if (isset($data[1])) {
-                    if (!empty($data[1])) {
+                    if (! empty($data[1])) {
                         $parameters['count'] = $data[1];
                     }
                 }
 
                 if (isset($data[2])) {
-                    if (!empty($data[2])) {
+                    if (! empty($data[2])) {
                         $parameters['price'] = $data[2];
                     }
                 }
 
                 if (isset($data[3])) {
-                    if (!empty($data[3])) {
+                    if (! empty($data[3])) {
                         $parameters['currency'] = $this->getCurrency($data[3]);
                     }
                 }
@@ -399,24 +401,28 @@ class FileReader
         return $entities;
     }
 
-    private function getCurrency($tag) : string
+    private function getCurrency($tag): string
     {
         switch ($tag) {
-            case 'RUB' : {
-                return "₽";
-            }
+            case 'RUB':
+                {
+                    return "₽";
+                }
 
-            case 'EUR' : {
-                return "€";
-            }
+            case 'EUR':
+                {
+                    return "€";
+                }
 
-            case 'GBP' : {
-                return "£";
-            }
+            case 'GBP':
+                {
+                    return "£";
+                }
 
-            default : {
-                return "$";
-            }
+            default:
+                {
+                    return "$";
+                }
         }
     }
 }

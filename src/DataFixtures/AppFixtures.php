@@ -1,5 +1,4 @@
 <?php
-
 namespace App\DataFixtures;
 
 use App\Entity\Auth\User;
@@ -10,6 +9,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
+
     private UserPasswordHasherInterface $hasher;
 
     public function __construct(UserPasswordHasherInterface $hasher)
@@ -17,7 +17,7 @@ class AppFixtures extends Fixture
         $this->hasher = $hasher;
     }
 
-    public function load(ObjectManager $manager) : void
+    public function load(ObjectManager $manager): void
     {
         $admin = $this->loadAdminUser($manager);
 
@@ -26,14 +26,10 @@ class AppFixtures extends Fixture
         $loggingPath = $kernel->getContainer()->getParameter('logging');
 
         $loggingPath .= "fixtures.log";
-        file_put_contents(
-            $loggingPath,
-            date('H:i:s d-m-Y') ."\n\t".
-            "Username: ". $admin['username'] ." Password: ". $admin['password'] ."\n"
-        );
+        file_put_contents($loggingPath, date('H:i:s d-m-Y') . "\n\t" . "Username: " . $admin['username'] . " Password: " . $admin['password'] . "\n");
     }
 
-    private function loadAdminUser(ObjectManager $manager) : array
+    private function loadAdminUser(ObjectManager $manager): array
     {
         $admin = new User();
 
@@ -41,7 +37,10 @@ class AppFixtures extends Fixture
         $password = uniqid();
 
         $admin->setUsername($username);
-        $admin->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
+        $admin->setRoles([
+            'ROLE_ADMIN',
+            'ROLE_USER'
+        ]);
 
         $hashPassword = $this->hasher->hashPassword($admin, $password);
         $admin->setPassword($hashPassword);
@@ -49,6 +48,9 @@ class AppFixtures extends Fixture
         $manager->persist($admin);
         $manager->flush();
 
-        return ['username' => $username, 'password' => $password];
+        return [
+            'username' => $username,
+            'password' => $password
+        ];
     }
 }

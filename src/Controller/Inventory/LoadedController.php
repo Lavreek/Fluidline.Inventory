@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Inventory;
 
 use App\Entity\Inventory\Inventory;
@@ -12,6 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class LoadedController extends AbstractController
 {
+
     #[Route('/admin/loaded/types', name: 'admin_loaded_types')]
     public function viewLoadedTypes(ManagerRegistry $registry): Response
     {
@@ -22,7 +22,7 @@ class LoadedController extends AbstractController
 
         return $this->render('inventory/loaded/types.html.twig', [
             'user' => $this->getUser(),
-            'types' => $types,
+            'types' => $types
         ]);
     }
 
@@ -37,7 +37,7 @@ class LoadedController extends AbstractController
         return $this->render('inventory/loaded/serials.html.twig', [
             'user' => $this->getUser(),
             'type' => $type,
-            'serials' => $serials,
+            'serials' => $serials
         ]);
     }
 
@@ -57,7 +57,7 @@ class LoadedController extends AbstractController
 
         return $this->render('inventory/viewer/products.html.twig', [
             'serial' => $serial,
-            'products' => $productsTable,
+            'products' => $productsTable
         ]);
     }
 }

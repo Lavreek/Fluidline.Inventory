@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Inventory;
 
 use App\Form\Inventory\InventoryInputType;
@@ -11,13 +10,20 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryConstructorController extends AbstractController
 {
-    #[Route('/download', name: 'app_download', methods: ['GET'])]
+
+    #[Route('/download', name: 'app_download', methods: [
+        'GET'
+    ])]
     public function index(Request $request): Response
     {
         $remoteAddress = $request->server->get('REMOTE_ADDR');
 
-        //ToDo: Make auth.
-        if (!in_array($remoteAddress, ['77.50.146.14', '185.180.124.14', '127.0.0.1'])) {
+        // ToDo: Make auth.
+        if (! in_array($remoteAddress, [
+            '77.50.146.14',
+            '185.180.124.14',
+            '127.0.0.1'
+        ])) {
             return new Response();
         }
 
@@ -25,17 +31,23 @@ class InventoryConstructorController extends AbstractController
 
         return $this->render('inventory/constructor/index.html.twig', [
             'inventory_form' => $inventory_form->createView(),
-            'controller_name' => 'InventoryConstructorController',
+            'controller_name' => 'InventoryConstructorController'
         ]);
     }
 
-    #[Route('/appraise', name: 'app_appraise', methods: ['GET'])]
+    #[Route('/appraise', name: 'app_appraise', methods: [
+        'GET'
+    ])]
     public function appraise(Request $request): Response
     {
         $remoteAddress = $request->server->get('REMOTE_ADDR');
 
-        //ToDo: Make auth.
-        if (!in_array($remoteAddress, ['77.50.146.14', '185.180.124.14', '127.0.0.1'])) {
+        // ToDo: Make auth.
+        if (! in_array($remoteAddress, [
+            '77.50.146.14',
+            '185.180.124.14',
+            '127.0.0.1'
+        ])) {
             return new Response();
         }
 
@@ -43,7 +55,7 @@ class InventoryConstructorController extends AbstractController
 
         return $this->render('inventory/constructor/index.html.twig', [
             'inventory_form' => $inventory_form->createView(),
-            'controller_name' => 'InventoryConstructorController',
+            'controller_name' => 'InventoryConstructorController'
         ]);
     }
 }

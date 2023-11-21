@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller\Form;
 
 use App\Form\InventoryPricesType;
@@ -13,13 +12,14 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class InventoryPriceController extends AbstractController
 {
+
     #[Route('/appraise/create', name: 'app_form_appraise_create')]
     public function index(Request $request): JsonResponse|RedirectResponse
     {
         $appraise_form = $this->createForm(InventoryPricesType::class);
         $appraise_form->handleRequest($request);
 
-        if ($appraise_form->isValid() and  $appraise_form->isSubmitted()) {
+        if ($appraise_form->isValid() and $appraise_form->isSubmitted()) {
             $form_data = $appraise_form->getData();
 
             /** @var UploadedFile $appraise_file */
@@ -29,20 +29,22 @@ class InventoryPriceController extends AbstractController
             $entities = $reader->getCSVPrices($appraise_file->getContent());
 
             foreach (array_chunk($entities, 1000) as $chunkIndex => $chunk) {
-                $this->serializeAttachments($chunk, "chunk-". $chunkIndex ."-". $appraise_file->getClientOriginalName());
+                $this->serializeAttachments($chunk, "chunk-" . $chunkIndex . "-" . $appraise_file->getClientOriginalName());
             }
 
             return $this->redirectToRoute('app_inventory_appraise');
         }
 
-        return new JsonResponse(['message' => 'Форма не прошла валидацию в системе']);
+        return new JsonResponse([
+            'message' => 'Форма не прошла валидацию в системе'
+        ]);
     }
 
     private function serializeAttachments($entity, $filename)
     {
         $serializePath = $this->getParameter('inventory_serialize_price_directory');
 
-        if (!is_dir($serializePath)) {
+        if (! is_dir($serializePath)) {
             mkdir($serializePath, recursive: true);
         }
 

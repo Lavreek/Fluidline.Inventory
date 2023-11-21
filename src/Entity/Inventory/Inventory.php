@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity\Inventory;
 
 use App\Repository\Inventory\InventoryRepository;
@@ -9,11 +8,18 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryRepository::class)]
-#[ORM\Index(columns: ['code'], name: 'idx_code')]
-#[ORM\Index(name: 'idx_serial', columns: ['serial'])]
-#[ORM\Index(name: 'idx_type', columns: ['type'])]
+#[ORM\Index(columns: [
+    'code'
+], name: 'idx_code')]
+#[ORM\Index(name: 'idx_serial', columns: [
+    'serial'
+])]
+#[ORM\Index(name: 'idx_type', columns: [
+    'type'
+])]
 class Inventory
 {
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -28,25 +34,25 @@ class Inventory
     #[ORM\Column(length: 255)]
     private ?string $code = null;
 
-    #[ORM\OneToOne(
-        mappedBy: 'code', targetEntity: InventoryPricehouse::class, cascade: ['persist', 'remove'],
-        orphanRemoval: true
-    )]
+    #[ORM\OneToOne(mappedBy: 'code', targetEntity: InventoryPricehouse::class, cascade: [
+        'persist',
+        'remove'
+    ], orphanRemoval: true)]
     private ?InventoryPricehouse $price = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $created = null;
 
-    #[ORM\OneToMany(
-        mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: ['persist', 'remove'],
-        orphanRemoval: true
-    )]
+    #[ORM\OneToMany(mappedBy: 'code', targetEntity: InventoryParamhouse::class, cascade: [
+        'persist',
+        'remove'
+    ], orphanRemoval: true)]
     private Collection $parameters;
 
-    #[ORM\OneToOne(
-        mappedBy: 'code', targetEntity: InventoryAttachmenthouse::class, cascade: ['persist', 'remove'],
-        orphanRemoval: true
-    )]
+    #[ORM\OneToOne(mappedBy: 'code', targetEntity: InventoryAttachmenthouse::class, cascade: [
+        'persist',
+        'remove'
+    ], orphanRemoval: true)]
     private ?InventoryAttachmenthouse $attachments = null;
 
     public function __construct()
@@ -120,6 +126,7 @@ class Inventory
     }
 
     /**
+     *
      * @return Collection<int, InventoryParamhouse>
      */
     public function getParameters(): Collection
@@ -129,7 +136,7 @@ class Inventory
 
     public function addParameter(InventoryParamhouse $parameter): static
     {
-        if (!$this->parameters->contains($parameter)) {
+        if (! $this->parameters->contains($parameter)) {
             $this->parameters->add($parameter);
             $parameter->setCode($this);
         }
