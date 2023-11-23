@@ -13,7 +13,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'PricePuller', description: 'Добавление основных цен на продукцию')]
 class PricePullerCommand extends Command
 {
-
     private Directory $directories;
 
     private ObjectManager $manager;
@@ -55,14 +54,14 @@ class PricePullerCommand extends Command
                                             'serial' => $fileinfo['filename']
                                         ]);
 
-                                        if (! is_null($inventory)) {
+                                        if (!is_null($inventory)) {
                                             $price = $inventory->getPrice();
 
                                             $price->setValue($row[1]);
                                             $price->setWarehouse($row[2]);
                                             $price->setCurrency($row[3]);
 
-                                            $manager->persist($price);
+                                            $manager->persist($inventory);
                                         }
                                     }
                                 }
