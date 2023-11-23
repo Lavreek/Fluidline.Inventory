@@ -48,7 +48,7 @@ class PricePullerCommand extends Command
                         while ($row = fgetcsv($file, separator: ';')) {
                             if ($rowPosition > 0) {
                                 if (isset($row[0], $row[1], $row[2], $row[3])) {
-                                    if (! empty($row[0]) and ! empty($row[3])) { // row[1] and row[2] can be zero
+                                    if (!empty($row[0]) and !empty($row[3])) { // row[1] and row[2] can be zero
                                         $inventory = $inventoryRepository->findOneBy([
                                             'code' => $row[0],
                                             'serial' => $fileinfo['filename']
@@ -62,21 +62,23 @@ class PricePullerCommand extends Command
                                             $price->setCurrency($row[3]);
 
                                             $manager->persist($inventory);
+
+                                            try {
+                                                $manager->flush();
+                                                $manager->clear();
+
+                                            } catch (\Exception | \Throwable $exception) {
+                                                $customMessage = "\nFlush error in {$fileinfo['filename']}\n";
+
+                                                file_put_contents($this->directories->getLogfilePath(), "Symfony command: PricePuller\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
+                                            }
+
                                         }
                                     }
                                 }
                             }
 
                             $rowPosition ++;
-                        }
-
-                        try {
-                            $manager->flush();
-                            $manager->clear();
-                        } catch (\Exception | \Throwable $exception) {
-                            $customMessage = "\nFlush error in {$fileinfo['filename']}\n";
-
-                            file_put_contents($this->directories->getLogfilePath(), "Symfony command: PricePuller\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
                         }
 
                         touch($pricePath . $fileinfo['filename'] . ".lock");
