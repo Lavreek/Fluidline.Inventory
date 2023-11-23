@@ -35,6 +35,10 @@ class PricePullerCommand extends Command
         foreach ($files as $file) {
             $fileinfo = pathinfo($file);
 
+            if (file_exists($fileinfo['filename'] .".lock")) {
+                continue;
+            }
+
             if (isset($fileinfo['extension'])) {
                 if ($fileinfo['extension'] == "csv") {
                     $file = fopen($pricePath . $file, 'r');
@@ -83,7 +87,7 @@ class PricePullerCommand extends Command
 
                             $rowPosition ++;
                         }
-                        var_dump( $pricePath . $fileinfo['filename'] . ".lock");
+
                         touch($pricePath . $fileinfo['filename'] . ".lock");
 
                         fclose($file);
