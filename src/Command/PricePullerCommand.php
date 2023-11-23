@@ -55,6 +55,7 @@ class PricePullerCommand extends Command
                                         ]);
 
                                         if (!is_null($inventory)) {
+                                            echo "Update: ". $inventory->getCode() ."\n";
                                             $price = $inventory->getPrice();
 
                                             $price->setValue($row[1]);
@@ -65,6 +66,9 @@ class PricePullerCommand extends Command
 
                                             try {
                                                 $manager->flush();
+
+                                                echo "Manager flushed.\n";
+
                                                 $manager->clear();
 
                                             } catch (\Exception | \Throwable $exception) {
@@ -72,7 +76,6 @@ class PricePullerCommand extends Command
 
                                                 file_put_contents($this->directories->getLogfilePath(), "Symfony command: PricePuller\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
                                             }
-
                                         }
                                     }
                                 }
@@ -80,7 +83,7 @@ class PricePullerCommand extends Command
 
                             $rowPosition ++;
                         }
-
+                        var_dump( $pricePath . $fileinfo['filename'] . ".lock");
                         touch($pricePath . $fileinfo['filename'] . ".lock");
 
                         fclose($file);
