@@ -16,13 +16,13 @@ class GetHelper
             $object = json_decode($serialize, true);
 
             foreach ($object['parameters'] as $parameterIndex => $parameter) {
-                $parameter['name'] = strip_tags($parameter['name']);
+                $parameter['name'] = strip_tags($parameter['name'], ['a']);
 
                 if (! in_array($parameter['name'], $filterOrder)) {
                     $filterOrder[] = $parameter['name'];
                 }
 
-                $object['parameters'][$parameterIndex]['value'] = strip_tags($object['parameters'][$parameterIndex]['value']);
+                $object['parameters'][$parameterIndex]['value'] = strip_tags($object['parameters'][$parameterIndex]['value'], ['a']);
 
                 unset($object['parameters'][$parameterIndex]['id'], $object['parameters'][$parameterIndex]['code']);
             }

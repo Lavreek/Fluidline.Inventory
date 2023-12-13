@@ -63,7 +63,7 @@ class ImagesPullerCommand extends Command
                         ]);
 
                         if (is_null($inventory)) {
-                            echo "Serial {$fileinfo['filename']} is not isset\n";
+                            // echo "Serial {$fileinfo['filename']} is not isset\n";
                             fclose($file);
                             continue;
                         }
@@ -81,7 +81,8 @@ class ImagesPullerCommand extends Command
                                             'code' => $row[0]
                                         ]);
 
-                                        if (! is_null($inventory)) {
+                                        if (!is_null($inventory)) {
+                                            echo "Using code: ". $inventory->getCode() ."\n";
                                             $attachment = $inventory->getAttachments();
                                             $attachment->setImage($row[2]);
 
