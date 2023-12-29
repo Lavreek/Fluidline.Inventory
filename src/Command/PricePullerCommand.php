@@ -8,6 +8,7 @@ use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'PricePuller', description: 'Добавление основных цен на продукцию')]
@@ -19,11 +20,15 @@ class PricePullerCommand extends Command
 
     protected function configure(): void
     {
+        $this->addOption('file', null, InputOption::VALUE_OPTIONAL,
+            'Какой файл должен быть обработан?', '');
         $this->directories = new Directory();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $forceFile = $input->getOption('file');
+
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
 
@@ -34,6 +39,12 @@ class PricePullerCommand extends Command
 
         foreach ($files as $file) {
             $fileinfo = pathinfo($file);
+
+            if (!empty($forceFile)) {
+                if ($file != $forceFile) {
+                    continue;
+                }
+            }
 
             if (file_exists($fileinfo['filename'] .".lock")) {
                 continue;

@@ -13,32 +13,27 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'Persist', description: 'Добавление продукции в систему Inventory')]
-class 
-PersistCommand extends Command
+class PersistCommand extends Command
 {
-
     const max_memory_limit = '1024M';
 
     private Directory $directories;
 
     /**
-     *
      * @var array $images Объект, который корректирует сериализованные данные.
-     *      Работает относительно изображений продукции в сериализованных данных
+     * Работает относительно изображений продукции в сериализованных данных.
      */
     private array $images;
 
     /**
-     *
      * @var array $prices Объект, который корректирует сериализованные данные.
-     *      Работает относительно цен на продукцию в сериализованных данных
+     * Работает относительно цен на продукцию в сериализованных данных
      */
     private array $prices;
 
     /**
-     *
      * @var array $models Объект, который корректирует сериализованные данные.
-     *      Работает относительно моделей продукции в сериализованных данных
+     * Работает относительно моделей продукции в сериализованных данных
      */
     private array $models;
 
@@ -71,11 +66,11 @@ PersistCommand extends Command
 
     private function writeToFile($path, $content): void
     {
-        if (! $this->directories->checkPath(dirname($path))) {
+        if (!$this->directories->checkPath(dirname($path))) {
             $this->directories->createDirectory(dirname($path));
         }
 
-        if (! file_exists($path)) {
+        if (!file_exists($path)) {
             touch($path);
         }
 
@@ -84,14 +79,16 @@ PersistCommand extends Command
         fclose($f);
     }
 
-    private function getFiles(string $path): array
+    private function getFiles(string $path): ?array
     {
-        $difference = [
-            '..',
-            '.',
-            '.gitignore'
-        ];
-        return array_diff(scandir($path), $difference);
+        if (is_dir($path)) {
+            $files = scandir($path);
+            $difference = ['..', '.', '.gitignore'];
+
+            return array_diff($files, $difference);
+        }
+
+        return null;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -231,9 +228,17 @@ PersistCommand extends Command
                     $entityManager->flush();
                     echo "\nIn $serial - attachments \n\t File $filename added.\n";
 
-                    $this->writeToFile($prices['path'] . $serial . ".gen", $prices['csv_content']);
-                    $this->writeToFile($images['path'] . $serial . ".gen", $images['csv_content']);
-                    $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
+                    if ($prices['exist'] !== 2) {
+                        $this->writeToFile($prices['path'] . $serial . ".gen", $prices['csv_content']);
+                    }
+
+                    if ($images['exist'] !== 2) {
+                        $this->writeToFile($images['path'] . $serial . ".gen", $images['csv_content']);
+                    }
+
+                    if ($models['exist'] !== 2) {
+                        $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
+                    }
 
                     $entityManager->clear();
                 } catch (\Exception | \Throwable $exception) {
@@ -273,7 +278,7 @@ PersistCommand extends Command
             $this->startedFileExist($parameter['path'] . $serial, $parameter['exist'], $parameter['csv_content']);
         }
 
-        if ($parameter['exist'] === 0) {
+        if ($parameter['exist'] == 0) {
             touch($parameter['path'] . $serial . ".gen");
             $parameter['csv_content'] .= $parameter['csv_header'];
             $parameter['exist'] = 1;

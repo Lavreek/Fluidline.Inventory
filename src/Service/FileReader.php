@@ -24,9 +24,27 @@ class FileReader
 
     private UploadedFile|string $file;
 
-    public function setFileDelimiter($delimiter): void
+    public function setFileDelimiter($file) : void
     {
-        $this->fileDelimiter = $delimiter;
+        $delimiter = false;
+        $tries = 0;
+
+        while (!$delimiter) {
+            $prev = stream_get_contents($file, 1);
+
+            if ($prev == '#') {
+                $delimiter = stream_get_contents($file, 1);
+                $this->fileDelimiter = $delimiter;
+            }
+
+            $tries ++;
+
+            if ($tries > 10) {
+                break;
+            }
+        }
+
+        rewind($file);
     }
 
     public function getFileDelimiter(): string
@@ -129,75 +147,90 @@ class FileReader
         return null;
     }
 
-    private function getParameters($values): void
+    private function getProducts($codes)
     {
-        $products = &$this->products;
+        while ($codes) {
+            $product = array_shift($codes);
+
+            foreach ($product['values'] as $key => $values) {
+                die(); //ToDo: Переделать загрузку сущностей
+            }
+        }
+    }
+
+    private function getParameters($values, $products = []): void
+    {
         $parameters = &$this->parameters;
 
+        $this->getProducts($values);
+
+        die();
         if (current($values)) {
             $key = key($values);
             $current = current($values);
 
-            if (! empty($products)) {
-                $productsInterim = [];
+//            if (!empty($products)) {
+//                $productsInterim = [];
+//
+//                foreach ($products as $product) {
+//                    for ($i = 0; $i < count($current); $i ++) {
+//                        $productsInterim[] = $product;
+//                        $position = count($productsInterim);
+//
+//                        if ($current[$i] !== '-') {
+//                            $productsInterim[$position - 1]['code'] = $productsInterim[$position - 1]['code'] . '-' . $current[$i];
+//                        }
+//
+//                        if (isset($parameters[$key])) {
+//                            $description = $this->setDescription($key, $i);
+//
+//                            foreach ($parameters[$key] as $groupKey => $groupValue) {
+//                                if (isset($parameters[$key][$groupKey][$i])) {
+//                                    $group = [
+//                                        'name' => $groupKey,
+//                                        'value' => trim($parameters[$key][$groupKey][$i], "\"")
+//                                    ];
+//
+//                                    if (isset($description[$groupKey])) {
+//                                        $group['description'] = $description[$groupKey];
+//                                    }
+//
+//                                    $productsInterim[$position - 1]['parameters'][] = $group;
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                $products = $productsInterim;
+//            } else {
+//                for ($i = 0; $i < count($current); $i ++) {
+//                    $products[]['code'] = $current[$i];
+//
+//                    $currentPosition = count($products) - 1;
+//
+//                    $products[$currentPosition]['parameters'] = [];
+//
+//                    if (isset($parameters[$key])) {
+//                        $description = $this->setDescription($key, $i);
+//
+//                        foreach ($parameters[$key] as $groupKey => $groupValue) {
+//                            $group = [
+//                                'name' => $groupKey,
+//                                'value' => trim($parameters[$key][$groupKey][$i], "\"")
+//                            ];
+//
+//                            if (! is_null($description)) {
+//                                $group['description'] = $description;
+//                            }
+//
+//                            $products[$currentPosition]['parameters'][] = $group;
+//                        }
+//                    }
+//                }
+//            }
 
-                foreach ($products as $product) {
-                    for ($i = 0; $i < count($current); $i ++) {
-                        $productsInterim[] = $product;
-                        $position = count($productsInterim);
-
-                        if ($current[$i] !== '-') {
-                            $productsInterim[$position - 1]['code'] = $productsInterim[$position - 1]['code'] . '-' . $current[$i];
-                        }
-
-                        if (isset($parameters[$key])) {
-                            $description = $this->setDescription($key, $i);
-
-                            foreach ($parameters[$key] as $groupKey => $groupValue) {
-                                if (isset($parameters[$key][$groupKey][$i])) {
-                                    $group = [
-                                        'name' => $groupKey,
-                                        'value' => trim($parameters[$key][$groupKey][$i], "\"")
-                                    ];
-
-                                    if (isset($description[$groupKey])) {
-                                        $group['description'] = $description[$groupKey];
-                                    }
-
-                                    $productsInterim[$position - 1]['parameters'][] = $group;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                $products = $productsInterim;
-            } else {
-                for ($i = 0; $i < count($current); $i ++) {
-                    $products[$i]['code'] = $current[$i];
-                    $products[$i]['parameters'] = [];
-
-                    if (isset($parameters[$key])) {
-                        $description = $this->setDescription($key, $i);
-
-                        foreach ($parameters[$key] as $groupKey => $groupValue) {
-                            $group = [
-                                'name' => $groupKey,
-                                'value' => trim($parameters[$key][$groupKey][$i], "\"")
-                            ];
-
-                            if (! is_null($description)) {
-                                $group['description'] = $description;
-                            }
-
-                            $products[$i]['parameters'][] = $group;
-                        }
-                    }
-                }
-            }
-
-            next($values);
-            $this->getParameters($values);
+            $this->getParameters($values, $products);
         }
     }
 
@@ -205,109 +238,76 @@ class FileReader
     {
         $row = 0;
 
-        $header = $position = $values = [];
+        $this->setFileDelimiter($file);
 
-        $delimiter = false;
-        $tries = 0;
-        while (! $delimiter) {
-            $prev = stream_get_contents($file, 1);
-
-            if ($prev == '#') {
-                $delimiter = stream_get_contents($file, 1);
-                $this->setFileDelimiter($delimiter);
-            }
-
-            if ($tries > 10) {
-                return [];
-            }
-
-            $tries ++;
+        if (empty($this->fileDelimiter)) {
+            return [];
         }
 
-        rewind($file);
+        $values = $parameters = $naming = [];
 
         while ($data = fgetcsv($file, separator: $this->getFileDelimiter())) {
-            if (! preg_match('#\##', $data[0]) and $row === 0) {
-                throw new \Exception("\nFirst column must be empty with heading \"#\"\n");
-            }
-
+            //if (!preg_match('#\##', $data[0]) and $row === 0) {
+            //    throw new \Exception("\nFirst column must be empty with heading \"#\"\n");
+            //}
             unset($data[0]);
+            $data = array_values($data);
 
-            if ($row === 0) {
-                $header = $data;
-
+            if ($row == 0) {
                 foreach ($data as $columnKey => $columnData) {
                     $columnKey = trim($columnKey, "\"");
                     $columnData = trim($columnData, "\"");
 
                     if (preg_match('#Параметр:(.*)#u', $columnData, $match)) {
-                        [
-                            $parameter,
-                            $name
-                        ] = explode(':', $match[1], 2);
+                        [$parameter, $name] = explode(':', $match[1], 2);
+
                         $this->parameters[$parameter][$name] = [];
-                        $position['parameters'][] = $columnKey;
+                        $parameters[$columnKey] = ['parameter' => $parameter, 'name' => $name];
+
                     } elseif (preg_match('#Условное обозначение:(.*)#u', $columnData, $match)) {
-                        $position['naming'][] = $columnKey;
+                        [$parameter, $name] = explode(':', $match[1], 2);
+
+                        $this->naming[$parameter][$name] = [];
+                        $naming[$columnKey] = ['parameter' => $parameter, 'name' => $name];
+
                     } elseif (preg_match('#Условие:(.*)#u', $columnData, $match)) {
-                        $position['conditions'][] = $columnKey;
                         $this->conditions[$match[1]] = [];
+
                     } elseif (preg_match('#Особый параметр:(.*)#u', $columnData, $match)) {
-                        $position['special'][] = $columnKey;
                         $this->special[$match[1]] = [];
+
                     } else {
-                        $values += [
-                            $columnData => []
-                        ];
-                        $position['values'][] = $columnKey;
+                        $values[$columnKey] = ['name' => $columnData, 'values' => []];
                     }
                 }
+
             } else {
-                foreach ($data as $columnKey => $columnData) {
-                    if (! empty($columnData)) {
-                        $columnKey = trim($columnKey, "\"");
-                        $columnData = trim($columnData, "\"");
+                foreach ($data as $columnKey => $columnValue) {
+                    $columnKey = trim($columnKey, "\"");
+                    $columnValue = trim($columnValue, "\"");
 
-                        if (in_array($columnKey, $position['values'])) {
-                            $values[$header[$columnKey]][] = $columnData;
-                        } elseif (in_array($columnKey, $position['parameters'])) {
-                            preg_match('#Параметр:(.*)#u', $header[$columnKey], $match);
-                            [
-                                $parameter,
-                                $name
-                            ] = explode(':', $match[1], 2);
-                            $this->parameters[$parameter][$name][] = $columnData;
-                        } elseif (in_array($columnKey, $position['naming'])) {
-                            preg_match('#Условное обозначение:(.*)#u', $header[$columnKey], $match);
-                            [
-                                $columnName,
-                                $columnTarget
-                            ] = explode(":", $match[1], 2);
-                            $this->naming[$columnName][$columnTarget][] = $columnData;
-                        } elseif (in_array($columnKey, $position['conditions'])) {
-                            preg_match('#ЕСЛИ\((.+)\)=\((.+)\)#u', $columnData, $match);
-
-                            $exp = explode(":", $header[$columnKey], 2);
-                            $conditionValue = $exp[1];
-
-                            if (isset($match[0])) {
-                                $conditionsExplode = explode('&', $match[1]);
-
-                                foreach ($conditionsExplode as $exp) {
-                                    $this->conditions[$conditionValue][] = $exp;
-                                }
-
-                                $this->conditions[$conditionValue]['result'] = $match[2];
-                            }
-                        } elseif (in_array($columnKey, $position['special'])) {
-                            preg_match('#Особый параметр:(.*)#u', $header[$columnKey], $match);
-                            $this->special[$match[1]][] = $columnData;
-                        }
+                    if (isset($values[$columnKey])) {
+                        $values[$columnKey]['values'][] = $columnValue;
                     }
+
+                    if (isset($parameters[$columnKey])) {
+                        $parameter = $parameters[$columnKey]['parameter'];
+                        $name = $parameters[$columnKey]['name'];
+
+                        $this->parameters[$parameter][$name][] = $columnValue;
+                    }
+
+                    if (isset($naming[$columnKey])) {
+                        $parameter = $naming[$columnKey]['parameter'];
+                        $name = $naming[$columnKey]['name'];
+
+                        $this->naming[$parameter][$name][] = $columnValue;
+                    }
+
                 }
             }
 
-            $row ++;
+            $row++;
         }
 
         return $values;
@@ -325,7 +325,7 @@ class FileReader
             $file = fopen($directory . $filename->getClientOriginalName(), 'r');
         }
 
-        $this->getParameters($this->getCSVValues($file));
+        $product = $this->getParameters($this->getCSVValues($file));
 
         // TODO: SPECIAL MODIFICATIONS "$this->special"
 

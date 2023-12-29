@@ -64,7 +64,10 @@ if (count($a) > 0) {
             $serials = array_diff(scandir($serialPath), $difference);
 
             foreach ($serials as $serial) {
-                $command = $PHPCli . " \"" . ROOT . "bin/console\" Crawler";
+                $command = $PHPCli . " \"" . ROOT . "bin/console\" Crawler --file=\"$serial\"";
+
+                echo "\nloadCrawler Using: $serial";
+
                 exec($command, $output, $commandResult);
 
                 $execMessage = "\n" . implode("\n", $output) . "\n";

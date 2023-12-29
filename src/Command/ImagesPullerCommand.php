@@ -8,24 +8,27 @@ use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'ImagesPuller', description: 'Загрузка изображений для продукции')]
 class ImagesPullerCommand extends Command
 {
-
     private Directory $directories;
 
     private ObjectManager $manager;
 
     protected function configure(): void
     {
+        $this->addOption('file', null, InputOption::VALUE_OPTIONAL, 'Which file could be serialized?', '');
         $this->directories = new Directory();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         ini_set('memory_limit', '2048M');
+
+        $forceFile = $input->getOption('file');
 
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
@@ -39,6 +42,12 @@ class ImagesPullerCommand extends Command
         $imageFilesProcessed = 0;
 
         foreach ($imagesFiles as $file) {
+            if (!empty($forceFile)) {
+                if ($file != $forceFile) {
+                    continue;
+                }
+            }
+
             $fileinfo = pathinfo($file);
 
             if (isset($fileinfo['extension'])) {
@@ -63,7 +72,6 @@ class ImagesPullerCommand extends Command
                         ]);
 
                         if (is_null($inventory)) {
-                            // echo "Serial {$fileinfo['filename']} is not isset\n";
                             fclose($file);
                             continue;
                         }
@@ -84,6 +92,8 @@ class ImagesPullerCommand extends Command
                                         if (!is_null($inventory)) {
                                             echo "Using code: ". $inventory->getCode() ."\n";
                                             $attachment = $inventory->getAttachments();
+
+                                            echo "Setting image: ". $row[2] ."\n";
                                             $attachment->setImage($row[2]);
 
                                             $manager->persist($attachment);

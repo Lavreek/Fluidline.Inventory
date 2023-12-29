@@ -23,7 +23,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'Crawler', description: 'Создание сериализованных образов продукции, как сущности "Inventory"')]
 final class CrawlerCommand extends Command
 {
-
     /**
      * Ограничение выставляемое процессу при работе на виртуальном хостинге
      */
@@ -42,18 +41,24 @@ final class CrawlerCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('file', null, InputOption::VALUE_OPTIONAL, 'Which file could be serialized?', '');
-
+        $this->addOption('file', null, InputOption::VALUE_OPTIONAL,
+            'Какой файл должен быть обработан?', '');
+        $this->addOption('big', null, InputOption::VALUE_OPTIONAL,
+            'Включить в обработку большие ресурсы?', false);
         $this->directories = new Directory();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         ini_set('memory_limit', self::max_memory_limit);
+
+        // -- Получение изначальной памяти
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
+        // --
 
         $forceFile = $input->getOption('file');
+        $bigFiles = $input->getOption('big');
 
         $this->initialSettings();
 
@@ -67,7 +72,7 @@ final class CrawlerCommand extends Command
 
             if (count($files) > 0) {
                 foreach ($files as $file) {
-                    if (! empty($forceFile)) {
+                    if (!empty($forceFile)) {
                         if ($file != $forceFile) {
                             continue;
                         }
@@ -76,30 +81,19 @@ final class CrawlerCommand extends Command
                     $fileinfo = pathinfo($file);
                     $serial = $fileinfo['filename'];
 
-                    if (preg_match('#raw|RAW#u', $serial)) {
-                        // echo "Serial $serial already is raw data.\n";
+                    if ($this->checkFiles($type, $serial)) {
                         continue;
                     }
 
-                    if (is_dir($this->directories->getSerializePath() . $serial)) {
-                        // echo "Serial $serial already in queue.\n";
-                        continue;
+                    if (!$bigFiles) {
+                        if (file_exists($crawlerPath . "{$type}/{$serial}.big")) {
+                            continue;
+                        }
                     }
 
-                    if (file_exists($this->directories->getLocksPath() . $type . "/" . $serial . ".lock")) {
-                        // echo "Serial $serial lock file exist.\n";
-                        continue;
-                    }
+                    echo "Using type: $type / serial: $serial\n";
 
-                    if (file_exists($this->directories->getLocksPath() . $type . "/" . $serial . ".skip")) {
-                        // echo "Serial $serial skipped.\n";
-                        continue;
-                    }
-
-                    echo "Using type: $type\n";
-                    echo "Serial $serial using now.\n";
-
-                    $this->removeSerial($type, $serial);
+                    $this->remove($serial, $type);
 
                     $reader = new FileReader();
                     $reader->setReadDirectory($crawlerPath);
@@ -108,8 +102,15 @@ final class CrawlerCommand extends Command
 
                     if (count($products) > self::max_products_count) {
                         echo "Too many products\n";
+                        touch($crawlerPath . $type . "/" . $serial .".skip");
+                        continue;
+                    }
 
-                        return Command::FAILURE;
+                    if (!$bigFiles) {
+                        if (count($products) > 500) {
+                            touch($crawlerPath . $type . "/" . $serial .".big");
+                            continue;
+                        }
                     }
 
                     $puller = new EntityPuller();
@@ -152,7 +153,28 @@ final class CrawlerCommand extends Command
 
         echo "\nSerials to adding in queue is not exist.";
 
-        return Command::FAILURE;
+        return Command::SUCCESS;
+    }
+
+    private function checkFiles($type, $serial)
+    {
+        if (file_exists($this->directories->getLocksPath() . "{$type}/{$serial}.skip")) {
+            return true;
+        }
+
+        if (is_dir($this->directories->getSerializePath() . $serial)) {
+            return true;
+        }
+
+        if (file_exists($this->directories->getLocksPath() ."{$type}/{$serial}.lock")) {
+            return true;
+        }
+
+        if (preg_match('#raw|RAW#u', $serial)) {
+            return true;
+        }
+
+        return false;
     }
 
     private function initialSettings()
@@ -169,7 +191,7 @@ final class CrawlerCommand extends Command
         $this->directories->setProductsPath($container->getParameter('products'));
     }
 
-    private function removeSerial(string $type, string $serial): void
+    private function remove(string $serial, string $type): void
     {
         $entityManager = $this->getManager();
 
@@ -181,11 +203,7 @@ final class CrawlerCommand extends Command
 
     private function getFiles($path): array
     {
-        $difference = [
-            '.',
-            '..',
-            '.gitignore'
-        ];
+        $difference = ['.', '..', '.gitignore'];
         return array_diff(scandir($path), $difference);
     }
 
@@ -193,29 +211,11 @@ final class CrawlerCommand extends Command
     {
         $serialSerializePath = $this->directories->getSerializePath() . "/$serial/";
 
-        if (! is_dir($serialSerializePath)) {
+        if (!is_dir($serialSerializePath)) {
             mkdir($serialSerializePath, recursive: true);
         }
 
         file_put_contents($serialSerializePath . $filename . ".serial", serialize($products));
-    }
-
-    /**
-     *
-     * @deprecated
-     */
-    private function setContainer(mixed $container): void
-    {
-        $this->container = $container;
-    }
-
-    /**
-     *
-     * @deprecated
-     */
-    private function getContainer(): string
-    {
-        return $this->container;
     }
 
     private function setManager(ObjectManager $registry): void
