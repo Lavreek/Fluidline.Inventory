@@ -16,31 +16,39 @@ class EntityPuller
         $this->memory .= date("Y-m-d H:i:s") . " - " . $value . " \n";
     }
 
-    private function persistEntities($entity, $serial, $type): Inventory
+    private function persistEntities($products, $serial, $type) : array
     {
-        $inventory = new Inventory();
+        $newEntities = [];
 
-        $inventory->setType($type);
-        $inventory->setSerial($serial);
-        $inventory->setCode($entity['code']);
-        $inventory->setCreated(new \DateTime(date('Y-m-d H:i:s')));
+        for ($i = 0; $i < count($products['codes']); $i++) {
+            $code = $products['codes'][$i];
+            $parameters = $products['parameters'][$i];
+            $naming = $products['naming'][$i];
 
-        if (! empty($entity['parameters'])) {
-            foreach ($entity['parameters'] as $parameter) {
+            $inventory = new Inventory();
+
+            $inventory->setType($type);
+            $inventory->setSerial($serial);
+            $inventory->setCode($code);
+            $inventory->setCreated(new \DateTime(date('Y-m-d H:i:s')));
+
+            foreach ($parameters as $parameters_key => $parameters_value) {
                 $paramhouse = new InventoryParamhouse();
 
-                $paramhouse->setName($parameter['name']);
-                $paramhouse->setValue($parameter['value']);
+                $paramhouse->setName($parameters_key);
+                $paramhouse->setValue($parameters_value);
 
-                if (isset($parameter['description'])) {
-                    $paramhouse->setDescription($parameter['description']);
-                }
+                 if (isset($naming[$parameters_key])) {
+                     $paramhouse->setDescription($naming[$parameters_key]);
+                 }
 
                 $inventory->addParameter($paramhouse);
             }
+
+            $newEntities[] = $inventory;
         }
 
-        return $inventory;
+        return $newEntities;
     }
 
     public function setLogfilePath($path): void
@@ -57,12 +65,12 @@ class EntityPuller
     {
         $path = $this->getLogfilePath();
 
-        if (! is_null($path)) {
+        if (!empty($path)) {
             file_put_contents($path . "/memory.log", $this->memory);
         }
     }
 
-    public function pullEntities(string $type, string $serial, array &$entities)
+    public function pullEntities(string $type, string $serial, array $products) : array
     {
         register_shutdown_function([
             $this,
@@ -71,10 +79,10 @@ class EntityPuller
 
         $this->setMemory('memory usage: start : ' . memory_get_usage());
 
-        for ($i = 0; $i < count($entities); $i ++) {
-            $entities[$i] = $this->persistEntities($entities[$i], $serial, $type);
-        }
+        $entities = $this->persistEntities($products, $serial, $type);
 
         $this->setMemory('memory usage: end : ' . memory_get_usage());
+
+        return $entities;
     }
 }

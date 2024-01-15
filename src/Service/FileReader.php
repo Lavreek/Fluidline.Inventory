@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class FileReader
 {
+    private int $maxProductsCount;
 
     private array $products = [];
 
@@ -23,6 +24,13 @@ class FileReader
     private string $fileDelimiter;
 
     private UploadedFile|string $file;
+
+    public function setMaxProductCount($count) : self
+    {
+        $this->maxProductsCount = $count;
+
+        return $this;
+    }
 
     public function setFileDelimiter($file) : void
     {
@@ -149,89 +157,81 @@ class FileReader
 
     private function getProducts($codes)
     {
+        $CSVProducts = [];
+
         while ($codes) {
-            $product = array_shift($codes);
+            $codesProducts = array_shift($codes);
+            $newProducts = [];
 
-            foreach ($product['values'] as $key => $values) {
-                die(); //ToDo: Переделать загрузку сущностей
+            foreach ($codesProducts['values'] as $codesProducts_key => $codesProducts_value) {
+
+                if (empty($codesProducts_value)) { continue; }
+                if ($codesProducts_value == "-") { $codesProducts_value = ""; }
+
+                /** -- -- --
+                 * Массив параметров
+                 */
+                $parameters = [];
+
+                /** -- -- --
+                 * Массив условных обозначений
+                 */
+                $naming = [];
+
+                if (isset($this->parameters[$codesProducts['name']])) {
+                    foreach ($this->parameters[$codesProducts['name']] as $parameters_key => $parameters_value) {
+                        /** -- -- --
+                         * Добавление условных обозначений
+                         */
+                        if (
+                            isset($this->naming[$codesProducts['name']]) and
+                            isset($this->naming[$codesProducts['name']][$parameters_key])
+                        ) {
+                            if (!empty($this->naming[$codesProducts['name']][$parameters_key])) {
+                                $naming[$parameters_key] = $this->naming[$codesProducts['name']][$parameters_key][$codesProducts_key];
+                            }
+                        }
+                        /** -- -- -- */
+
+                        $parameters[$parameters_key] = $parameters_value[$codesProducts_key];
+                    }
+                }
+                /** -- -- -- */
+
+                $newProducts['codes'][] = $codesProducts_value;
+                $newProducts['parameters'][] = $parameters;
+                $newProducts['naming'][] = $naming;
             }
+
+            if (!empty($CSVProducts)) {
+                $middle = [];
+
+                $delimiter = "-";
+
+                for ($i = 0; $i < count($CSVProducts['codes']); $i++) {
+                    for ($j = 0; $j < count($newProducts['codes']); $j++) {
+                        $middle['codes'][] = trim(
+                            $CSVProducts['codes'][$i] . $delimiter . $newProducts['codes'][$j],
+                            "- \t\n\r\v"
+                        );
+
+                        $middle['parameters'][] = $CSVProducts['parameters'][$i] + $newProducts['parameters'][$j];
+                        $middle['naming'][] = $CSVProducts['naming'][$i] + $newProducts['naming'][$j];
+                    }
+                }
+
+                $newProducts = $middle;
+            }
+
+            $CSVProducts = $newProducts;
         }
-    }
 
-    private function getParameters($values, $products = []): void
-    {
-        $parameters = &$this->parameters;
-
-        $this->getProducts($values);
-
-        die();
-        if (current($values)) {
-            $key = key($values);
-            $current = current($values);
-
-//            if (!empty($products)) {
-//                $productsInterim = [];
-//
-//                foreach ($products as $product) {
-//                    for ($i = 0; $i < count($current); $i ++) {
-//                        $productsInterim[] = $product;
-//                        $position = count($productsInterim);
-//
-//                        if ($current[$i] !== '-') {
-//                            $productsInterim[$position - 1]['code'] = $productsInterim[$position - 1]['code'] . '-' . $current[$i];
-//                        }
-//
-//                        if (isset($parameters[$key])) {
-//                            $description = $this->setDescription($key, $i);
-//
-//                            foreach ($parameters[$key] as $groupKey => $groupValue) {
-//                                if (isset($parameters[$key][$groupKey][$i])) {
-//                                    $group = [
-//                                        'name' => $groupKey,
-//                                        'value' => trim($parameters[$key][$groupKey][$i], "\"")
-//                                    ];
-//
-//                                    if (isset($description[$groupKey])) {
-//                                        $group['description'] = $description[$groupKey];
-//                                    }
-//
-//                                    $productsInterim[$position - 1]['parameters'][] = $group;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                $products = $productsInterim;
-//            } else {
-//                for ($i = 0; $i < count($current); $i ++) {
-//                    $products[]['code'] = $current[$i];
-//
-//                    $currentPosition = count($products) - 1;
-//
-//                    $products[$currentPosition]['parameters'] = [];
-//
-//                    if (isset($parameters[$key])) {
-//                        $description = $this->setDescription($key, $i);
-//
-//                        foreach ($parameters[$key] as $groupKey => $groupValue) {
-//                            $group = [
-//                                'name' => $groupKey,
-//                                'value' => trim($parameters[$key][$groupKey][$i], "\"")
-//                            ];
-//
-//                            if (! is_null($description)) {
-//                                $group['description'] = $description;
-//                            }
-//
-//                            $products[$currentPosition]['parameters'][] = $group;
-//                        }
-//                    }
-//                }
-//            }
-
-            $this->getParameters($values, $products);
+        if (count($CSVProducts) > $this->maxProductsCount) {
+            echo "Количество продуктов превышает допустимое: {$this->maxProductsCount}\n";
+            return count($CSVProducts);
         }
+
+        return $CSVProducts;
     }
 
     private function getCSVValues($file): array
@@ -313,7 +313,7 @@ class FileReader
         return $values;
     }
 
-    public function executeCreate(): array
+    public function executeCreate(): array|int
     {
         $directory = $this->getReadDirectory();
 
@@ -325,24 +325,26 @@ class FileReader
             $file = fopen($directory . $filename->getClientOriginalName(), 'r');
         }
 
-        $product = $this->getParameters($this->getCSVValues($file));
+        $products = $this->getProducts(
+            $this->getCSVValues($file)
+        );
 
         // TODO: SPECIAL MODIFICATIONS "$this->special"
 
-        foreach ($this->products as $productsIndex => $productsElement) {
-            foreach ($this->conditions as $conditionKey => $conditionSet) {
-                $condition = $this->checkCondition($productsElement['parameters'], $conditionSet);
+//        foreach ($product as $productsIndex => $productsElement) {
+//            foreach ($this->conditions as $conditionKey => $conditionSet) {
+//                $condition = $this->checkCondition($productsElement['parameters'], $conditionSet);
+//
+//                if ($condition) {
+//                    $this->products[$productsIndex]['parameters'][] = [
+//                        'name' => $conditionKey,
+//                        'value' => $conditionSet['result']
+//                    ];
+//                }
+//            }
+//        }
 
-                if ($condition) {
-                    $this->products[$productsIndex]['parameters'][] = [
-                        'name' => $conditionKey,
-                        'value' => $conditionSet['result']
-                    ];
-                }
-            }
-        }
-
-        return $this->products;
+        return $products;
     }
 
     private function replaceNBSP($content): string

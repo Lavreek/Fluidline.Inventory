@@ -59,6 +59,10 @@ if (count($a) > 0) {
         $categories = array_diff(scandir($categoryPath), $difference);
 
         foreach ($categories as $category) {
+            if (preg_match('#RAW#u', $category)) {
+                continue;
+            }
+
             $serialPath = $categoryPath . $category . "/";
 
             $serials = array_diff(scandir($serialPath), $difference);

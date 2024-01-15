@@ -81,7 +81,7 @@ final class CrawlerCommand extends Command
                     $fileinfo = pathinfo($file);
                     $serial = $fileinfo['filename'];
 
-                    if ($this->checkFiles($type, $serial)) {
+                    if ($this->checkFiles($type, $serial, $forceFile)) {
                         continue;
                     }
 
@@ -98,11 +98,11 @@ final class CrawlerCommand extends Command
                     $reader = new FileReader();
                     $reader->setReadDirectory($crawlerPath);
                     $reader->setFile($type . "/" . $file);
+                    $reader->setMaxProductCount(self::max_products_count);
                     $products = $reader->executeCreate();
 
-                    if (count($products) > self::max_products_count) {
-                        echo "Too many products\n";
-                        touch($crawlerPath . $type . "/" . $serial .".skip");
+                    if (!is_array($products) and $products > self::max_products_count) {
+                        touch($crawlerPath . $type . "/" . $serial .".big");
                         continue;
                     }
 
@@ -115,7 +115,7 @@ final class CrawlerCommand extends Command
 
                     $puller = new EntityPuller();
                     $puller->setLogfilePath(dirname($this->directories->getLogfilePath()));
-                    $puller->pullEntities($type, $serial, $products);
+                    $products = $puller->pullEntities($type, $serial, $products);
 
                     try {
                         foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {
@@ -156,7 +156,7 @@ final class CrawlerCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function checkFiles($type, $serial)
+    private function checkFiles($type, $serial, $forceFile)
     {
         if (file_exists($this->directories->getLocksPath() . "{$type}/{$serial}.skip")) {
             return true;
@@ -167,6 +167,14 @@ final class CrawlerCommand extends Command
         }
 
         if (file_exists($this->directories->getLocksPath() ."{$type}/{$serial}.lock")) {
+            if (!empty($forceFile) && $forceFile == $serial .".csv") {
+                die("Найден файл ". $this->directories->getLocksPath() ."{$type}/{$serial}.lock по данной серии.");
+            }
+
+            return true;
+        }
+
+        if (preg_match('#raw|RAW#u', $type)) {
             return true;
         }
 

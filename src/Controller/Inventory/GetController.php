@@ -92,6 +92,17 @@ class GetController extends AbstractController
         ]);
     }
 
+    #[Route('/get/product/id/{id}', name: 'get_product_by_id')]
+    public function getProductById(#[MapEntity(mapping: ['id' => 'id'])] Inventory $inventory): JsonResponse
+    {
+        $serialize = Serializer::serializeElement($inventory);
+
+        $item = json_decode($serialize, true);
+        unset($item['created']);
+
+        return new JsonResponse($item, status: 200);
+    }
+
     #[Route('/get/product/{code}', name: 'get_product_code')]
     public function getProduct(#[MapEntity(mapping: ['code' => 'code'])] Inventory $inventory): JsonResponse
     {
@@ -100,6 +111,6 @@ class GetController extends AbstractController
         $item = json_decode($serialize, true);
         unset($item['created']);
 
-        return new JsonResponse($item);
+        return new JsonResponse($item, status: 200);
     }
 }

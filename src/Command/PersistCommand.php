@@ -134,9 +134,15 @@ class PersistCommand extends Command
                 /** @var Inventory[] $serializeData */
                 $serializeData = unserialize(stream_get_contents($f));
 
+                $type = null;
+
                 for ($i = 0; $i < count($serializeData); $i ++) {
                     if ($serializeData[$i]->getSerial() != $serial) {
                         $serializeData[$i]->setSerial($serial);
+                    }
+
+                    if (is_null($type) and !is_null($serializeData[$i]->getType())) {
+                        $type = $serializeData[$i]->getType();
                     }
 
                     $entityManager->persist($serializeData[$i]);
@@ -144,13 +150,12 @@ class PersistCommand extends Command
 
                 try {
                     $entityManager->flush();
-                    echo "\n In $serial entities added. \n";
+                    echo "\nIn $serial - Inventory and InventoryParamhouse added.";
 
                     $entityManager->clear();
                 } catch (\Exception | \Throwable $exception) {
-                    if (isset($type)) {
-                        $inventory->removeBySerialType($serial, $serializeData[$i]->getType());
-                    }
+
+                    $inventory->removeBySerialType($serial, $type);
 
                     $customMessage = "\nFlush error by $serialFolder in $filename\n";
 
@@ -173,10 +178,15 @@ class PersistCommand extends Command
                         'code' => $serializeData[$i]->getCode()
                     ]);
 
-                    if (! is_null($code)) {
+                    if (!is_null($code)) {
                         $this->fillParameters($prices, $serial);
 
-                        $pricehouse = new InventoryPricehouse();
+                        $pricehouse = $code->getPrice();
+
+                        if (is_null($pricehouse)) {
+                             $pricehouse = new InventoryPricehouse();
+                        }
+
                         $pricehouse->setValue(0);
                         $pricehouse->setWarehouse(0);
                         $pricehouse->setCode($code);
@@ -192,10 +202,13 @@ class PersistCommand extends Command
                         }
 
                         $this->fillParameters($images, $serial);
-
                         $this->fillParameters($models, $serial);
 
-                        $attachmenthouse = new InventoryAttachmenthouse();
+                        $attachmenthouse = $code->getAttachments();
+
+                        if (is_null($attachmenthouse)) {
+                             $attachmenthouse = new InventoryAttachmenthouse();
+                        }
 
                         $attachmenthouse->setImage("/assets/inventory/default.png");
 
@@ -226,25 +239,34 @@ class PersistCommand extends Command
 
                 try {
                     $entityManager->flush();
-                    echo "\nIn $serial - attachments \n\t File $filename added.\n";
+
+                    echo "\nIn $serial - InventoryAttachmenthouse added.\n";
 
                     if ($prices['exist'] !== 2) {
                         $this->writeToFile($prices['path'] . $serial . ".gen", $prices['csv_content']);
+                        echo "\nFile ". $prices['path'] . $serial . ".gen" ." - created.";
                     }
 
                     if ($images['exist'] !== 2) {
                         $this->writeToFile($images['path'] . $serial . ".gen", $images['csv_content']);
+                        echo "\nFile ". $images['path'] . $serial . ".gen" ." - created.";
                     }
 
                     if ($models['exist'] !== 2) {
                         $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
+                        echo "\nFile ". $models['path'] . $serial . ".gen" ." - created.";
                     }
 
                     $entityManager->clear();
                 } catch (\Exception | \Throwable $exception) {
+
+                    echo "\nIn $serial - InventoryAttachmenthouse: ".$exception->getMessage();
+
+                    $inventory->removeBySerialType($serial, $type);
+
                     fclose($f);
 
-                    $customMessage = "\nFlush error by $serialFolder in $filename\n";
+                    $customMessage = "\nFlush error by $serialFolder in \"attachments\" - $filename\n";
 
                     file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
 
@@ -254,6 +276,7 @@ class PersistCommand extends Command
                 fclose($f);
 
                 unlink($filename);
+                echo "\n\nFile $filename unlinked.";
 
                 if (count($serialFiles) < 1) {
                     rmdir($serializeSerialsPath);

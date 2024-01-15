@@ -78,26 +78,46 @@ class ImagesPullerCommand extends Command
 
                         echo "Executing process in serial {$fileinfo['filename']}\n";
 
-                        $rowPosition = 0;
+                        $rowPosition = $changed = 0;
+
+                        $header = [];
 
                         while ($row = fgetcsv($file, separator: ';')) {
-                            if ($rowPosition > 0) {
-                                if (isset($row[0], $row[1], $row[2])) {
-                                    if (! empty($row[0]) and ! empty($row[1] and ! empty($row[2]))) {
-                                        $inventory = $inventoryRepository->findOneBy([
-                                            'serial' => $fileinfo['filename'],
-                                            'code' => $row[0]
-                                        ]);
+                            if ($rowPosition == 0) {
+                                $header = $row;
 
-                                        if (!is_null($inventory)) {
-                                            echo "Using code: ". $inventory->getCode() ."\n";
-                                            $attachment = $inventory->getAttachments();
+                            } else {
+                                if (in_array('code', $header)) {
+                                    $position = array_search('code', $header);
 
-                                            echo "Setting image: ". $row[2] ."\n";
-                                            $attachment->setImage($row[2]);
+                                    $inventory = $inventoryRepository->findOneBy([
+                                        'serial' => $fileinfo['filename'],
+                                        'code' => $row[$position]
+                                    ]);
+                                } elseif (in_array('code_id', $header)) {
+                                    $position = array_search('code_id', $header);
 
-                                            $manager->persist($attachment);
-                                        }
+                                    $inventory = $inventoryRepository->findOneBy([
+                                        'serial' => $fileinfo['filename'],
+                                        'code_id' => $row[$position]
+                                    ]);
+                                } else {
+                                    break;
+                                }
+
+                                if (!is_null($inventory)) {
+                                    if (in_array('image_path', $header)) {
+                                        $position = array_search('image_path', $header);
+
+                                        echo "\nUsing code: ". $inventory->getCode();
+                                        $attachment = $inventory->getAttachments();
+
+                                        echo "\nSetting image: ". $row[$position];
+                                        $attachment->setImage($row[$position]);
+
+                                        $manager->persist($attachment);
+
+                                        $changed++;
                                     }
                                 }
                             }
@@ -110,7 +130,9 @@ class ImagesPullerCommand extends Command
 
                         fclose($file);
 
-                        touch($imagesPath . $fileinfo['filename'] . ".lock");
+                        if ($changed > 0) {
+                            touch($imagesPath . $fileinfo['filename'] . ".lock");
+                        }
 
                         break;
                     }
@@ -127,7 +149,7 @@ class ImagesPullerCommand extends Command
         }
 
         if ($imageFilesProcessed > 0) {
-            echo "File {$fileinfo['filename']} was loaded.";
+            echo "\nFile {$fileinfo['filename']} was loaded.";
         }
 
         $this->createLogfileResult($executeScriptTime, $executeScriptMemory);
