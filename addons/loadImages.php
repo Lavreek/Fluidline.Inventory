@@ -1,15 +1,11 @@
 <?php
 define('ROOT', dirname(__DIR__) . "/");
 
-$difference = [
-    '.',
-    '..',
-    '.gitignore'
-];
+$difference = ['.', '..', '.gitignore'];
 
 $options = getopt("v:");
 
-if (! isset($options['v'])) {
+if (!isset($options['v'])) {
     echo "\nYou can select version by using parameter -v=\"*.*\"";
     echo "\nDo you want to continue? ";
     echo "\nN - Next, C - Cancel [N/C]: ";
@@ -20,23 +16,20 @@ if (! isset($options['v'])) {
 
         switch ($step) {
             case 'n':
-            case 'N':
-                {
-                    $breakPoint = false;
-                    break;
-                }
+            case 'N': {
+                $breakPoint = false;
+                break;
+            }
 
             case 'c':
-            case 'C':
-                {
-                    die();
-                }
+            case 'C': {
+                die();
+            }
 
-            default:
-                {
-                    echo "N - Next, C - Cancel [N/C]: ";
-                    break;
-                }
+            default: {
+                echo "N - Next, C - Cancel [N/C]: ";
+                break;
+            }
         }
     }
 }
@@ -59,8 +52,8 @@ if (count($a) > 0) {
 
         $images = array_diff(scandir($imagesPath), $difference);
 
-        for ($i = 0; $i < count($images); $i ++) {
-            $command = $PHPCli . " \"" . ROOT . "bin/console\" ImagesPuller";
+        foreach ($images as $filePosition => $file) {
+            $command = $PHPCli . " \"" . ROOT . "bin/console\" ImagesPuller --file=\"$file\"";
             exec($command, $output, $commandResult);
 
             $execMessage = "\n" . implode("\n", $output) . "\n";

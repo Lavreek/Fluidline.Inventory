@@ -138,11 +138,11 @@ final class CrawlerCommand extends Command
 
                     $lockfile = $this->directories->getLocksPath() . $type . "/" . $serial . ".lock";
 
-                    if (! $this->directories->checkPath(dirname($lockfile))) {
+                    if (!$this->directories->checkPath(dirname($lockfile))) {
                         $this->directories->createDirectory(dirname($lockfile));
                     }
 
-                    if (! file_exists($lockfile)) {
+                    if (!file_exists($lockfile)) {
                         touch($lockfile);
                     }
 

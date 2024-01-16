@@ -55,12 +55,12 @@ if (count($a) > 0) {
     preg_match('#PHP 8\.#', $a[0], $matches);
 
     if (isset($matches[0])) {
-        $imagesPath = ROOT . "public/products/prices/";
+        $pricesPath = ROOT . "public/products/prices/";
 
-        $images = array_diff(scandir($imagesPath), $difference);
+        $prices = array_diff(scandir($pricesPath), $difference);
 
-        for ($i = 0; $i < count($images); $i ++) {
-            $command = $PHPCli . " \"" . ROOT . "bin/console\" PricePuller";
+        foreach ($prices as $filePosition => $file) {
+            $command = $PHPCli . " \"" . ROOT . "bin/console\" PricePuller --file=\"$file\"";
             exec($command, $output, $commandResult);
 
             $execMessage = "\n" . implode("\n", $output) . "\n";
@@ -75,6 +75,7 @@ if (count($a) > 0) {
                 }
             }
         }
+
     } else {
         throw new Exception('PHP version must be higher than 7.4.*');
     }
