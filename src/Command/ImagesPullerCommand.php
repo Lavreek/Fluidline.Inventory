@@ -20,7 +20,8 @@ class ImagesPullerCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('file', null, InputOption::VALUE_OPTIONAL, 'Which file could be serialized?', '');
+        $this->addOption('file', null, InputOption::VALUE_OPTIONAL,
+            'Which file could be serialized?', '');
         $this->directories = new Directory();
     }
 
@@ -28,10 +29,10 @@ class ImagesPullerCommand extends Command
     {
         ini_set('memory_limit', '2048M');
 
-        $forceFile = $input->getOption('file');
-
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
+
+        $forceFile = $input->getOption('file');
 
         $this->initialSettings();
 

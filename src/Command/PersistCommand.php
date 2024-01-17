@@ -10,6 +10,7 @@ use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'Persist', description: 'Добавление продукции в систему Inventory')]
@@ -41,6 +42,8 @@ class PersistCommand extends Command
 
     protected function configure(): void
     {
+        $this->addOption('type', null, InputOption::VALUE_OPTIONAL,
+            'Which type could be serialized?', '');
         $this->directories = new Directory();
     }
 
@@ -97,14 +100,20 @@ class PersistCommand extends Command
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
 
+        $forceType = $input->getOption('type');
+
         $this->initialSetup();
 
         $serializePath = $this->directories->getSerializePath();
 
         $serializeSerials = $this->getFiles($serializePath);
 
-        if (count($serializeSerials) > 0) {
-            $serialFolder = array_shift($serializeSerials);
+        foreach ($serializeSerials as $serialFolder) {
+            if (!empty($forceType)) {
+                if ($serialFolder != $forceType) {
+                    continue;
+                }
+            }
 
             $serializeSerialsPath = $serializePath . $serialFolder . "/";
 

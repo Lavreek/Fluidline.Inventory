@@ -32,8 +32,8 @@ if (!isset($options['v'])) {
     }
 }
 
-function runCommand($cli, $commandName, $filename) {
-    $command = $cli . " \"" . ROOT . "bin/console\" $commandName --file=\"$filename\"";
+function runCommand($cli, $commandName, $filename, $parameters = "") {
+    $command = $cli . " \"" . ROOT . "bin/console\" $commandName $parameters";
 
     echo "\nIn loadComplex execute: \"$commandName\" by file: \"$filename\"";
 
@@ -67,6 +67,8 @@ if (count($a) > 0) {
 
     if (isset($matches[0])) {
         $categoryPath = ROOT . "public/products/inventory/";
+        $lockPath = ROOT . "public/products/locks/";
+
         $categories = array_diff(scandir($categoryPath), $difference);
 
         foreach ($categories as $category) {
@@ -79,10 +81,16 @@ if (count($a) > 0) {
             $serials = array_diff(scandir($serialPath), $difference);
 
             foreach ($serials as $serial) {
-                runCommand($PHPCli,'Crawler', $serial);
-                runCommand($PHPCli,'Persist', $serial);
-                runCommand($PHPCli,'ImagesPuller', $serial);
-                runCommand($PHPCli,'PricePuller', $serial);
+                $serial_info = pathinfo($serial);
+
+                if (file_exists($lockPath . $category .'/'. $serial_info['filename'] .".lock")) {
+                    continue;
+                }
+
+                runCommand($PHPCli,'Crawler', $serial,"--file=\"$serial\"");
+                runCommand($PHPCli,'Persist', $serial, "--type=\"{$serial_info['filename']}\"");
+                runCommand($PHPCli,'ImagesPuller', $serial, "--file=\"$serial\"");
+                runCommand($PHPCli,'PricePuller', $serial, "--file=\"$serial\"");
             }
         }
     } else {

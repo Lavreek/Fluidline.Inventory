@@ -118,7 +118,7 @@ final class CrawlerCommand extends Command
                     $products = $puller->pullEntities($type, $serial, $products);
 
                     try {
-                        foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {
+                        foreach (array_chunk($products, 250) as $chunkIndex => $chunk) {
                             $filename = $chunkIndex . "-" . $file;
                             $this->serializeProducts($chunk, $serial, $filename);
                         }
