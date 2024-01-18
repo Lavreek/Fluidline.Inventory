@@ -113,4 +113,22 @@ class GetController extends AbstractController
 
         return new JsonResponse($item, status: 200);
     }
+
+    #[Route('/get/constructor/{base64_code}', name: 'get_product_code')]
+    public function getConstructorProduct($base64_code, ManagerRegistry $registry): JsonResponse
+    {
+        $code = trim(
+            urldecode(base64_decode($base64_code))
+        );
+
+        $inventory = $registry->getRepository(Inventory::class)
+            ->findOneBy(['code' => $code]);
+
+        $serialize = Serializer::serializeElement($inventory);
+
+        $item = json_decode($serialize, true);
+        unset($item['created']);
+
+        return new JsonResponse($item, status: 200);
+    }
 }
