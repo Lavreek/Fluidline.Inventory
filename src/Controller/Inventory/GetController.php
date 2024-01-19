@@ -4,6 +4,7 @@ namespace App\Controller\Inventory;
 use App\Controller\Inventory\Helpers\GetHelper;
 use App\Entity\Inventory\Inventory;
 use App\Repository\Inventory\InventoryRepository;
+use App\Service\ConstructorHelper;
 use App\Service\Serializer;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
@@ -124,11 +125,28 @@ class GetController extends AbstractController
         $inventory = $registry->getRepository(Inventory::class)
             ->findOneBy(['code' => $code]);
 
-        $serialize = Serializer::serializeElement($inventory);
+        if (!is_null($inventory)) {
+            $constructor = new ConstructorHelper();
+            $constructor->setInventoryPath(
+                $this->getParameter('products') .
+                "constructor/". $inventory->getSerial()
+            );
 
-        $item = json_decode($serialize, true);
-        unset($item['created']);
+            $serialize = Serializer::serializeElement($inventory);
 
-        return new JsonResponse($item, status: 200);
+            /** @var Inventory $item */
+            $item = json_decode($serialize, true);
+            unset($item['created']);
+
+            return new JsonResponse([
+                'item' => $item,
+                'images' => $constructor->getImages(
+                    $item['parameters']
+                ),
+                'inputs' => $constructor->getInputs()
+            ], status: 200);
+        }
+
+        return new JsonResponse(status: 404);
     }
 }

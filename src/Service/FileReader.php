@@ -5,7 +5,7 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class FileReader
+class FileReader extends FileHelper
 {
     private int $maxProductsCount;
 
@@ -21,7 +21,6 @@ class FileReader
 
     private string $readDirectory;
 
-    private string $fileDelimiter;
 
     private UploadedFile|string $file;
 
@@ -30,34 +29,6 @@ class FileReader
         $this->maxProductsCount = $count;
 
         return $this;
-    }
-
-    public function setFileDelimiter($file) : void
-    {
-        $delimiter = false;
-        $tries = 0;
-
-        while (!$delimiter) {
-            $prev = stream_get_contents($file, 1);
-
-            if ($prev == '#') {
-                $delimiter = stream_get_contents($file, 1);
-                $this->fileDelimiter = $delimiter;
-            }
-
-            $tries ++;
-
-            if ($tries > 10) {
-                break;
-            }
-        }
-
-        rewind($file);
-    }
-
-    public function getFileDelimiter(): string
-    {
-        return $this->fileDelimiter;
     }
 
     public function setReadDirectory($readDirectory): void
@@ -238,15 +209,18 @@ class FileReader
     {
         $row = 0;
 
-        $this->setFileDelimiter($file);
+        $delimiter = $this->getFileDelimiter($file);
 
-        if (empty($this->fileDelimiter)) {
+        if (
+            (is_string($delimiter) and empty($delimiter)) or
+            (is_bool($delimiter) and !$delimiter)
+        ) {
             return [];
         }
 
         $values = $parameters = $naming = [];
 
-        while ($data = fgetcsv($file, separator: $this->getFileDelimiter())) {
+        while ($data = fgetcsv($file, separator: $delimiter)) {
             //if (!preg_match('#\##', $data[0]) and $row === 0) {
             //    throw new \Exception("\nFirst column must be empty with heading \"#\"\n");
             //}
