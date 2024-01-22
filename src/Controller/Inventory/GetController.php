@@ -143,7 +143,7 @@ class GetController extends AbstractController
                 'images' => $constructor->getImages(
                     $item['parameters']
                 ),
-                'inputs' => $constructor->getInputs()
+                'elements' => $constructor->getElements()
             ], status: 200);
         }
 

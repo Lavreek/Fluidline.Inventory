@@ -86,23 +86,20 @@ final class ConstructorHelper extends FileHelper
         return $images;
     }
 
-    public function getInputs() {
-        $inputs = [];
-        $inputsPath = $this->getInventoryPath() ."/inputs";
+    public function getElements() {
+        $elements = [];
+        $inputsPath = $this->getInventoryPath() ."/elements";
 
         $files = array_diff(
             scandir($inputsPath), self::difference
         );
 
         foreach ($files as $file) {
-            $fileinfo = pathinfo($file);
-            $content = base64_encode(
-                file_get_contents($inputsPath ."/". $file)
+            $elements[] = json_decode(
+                file_get_contents($inputsPath . "/$file"), true
             );
-
-            $inputs[] = ['name' => $fileinfo['filename'], 'type' => $fileinfo['extension'], 'code' => $content];
         }
 
-        return $inputs;
+        return $elements;
     }
 }
