@@ -115,7 +115,7 @@ class GetController extends AbstractController
         return new JsonResponse($item, status: 200);
     }
 
-    #[Route('/get/constructor/{base64_code}', name: 'get_product_code')]
+    #[Route('/get/constructor/{base64_code}', name: 'get_constructor_base64_code')]
     public function getConstructorProduct($base64_code, ManagerRegistry $registry): JsonResponse
     {
         $code = trim(
