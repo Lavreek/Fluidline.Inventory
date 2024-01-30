@@ -42,8 +42,8 @@ class PersistCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('type', null, InputOption::VALUE_OPTIONAL,
-            'Which type could be serialized?', '');
+        $this->addOption('serial', null, InputOption::VALUE_OPTIONAL,
+            'Which serial could be serialized?', '');
         $this->directories = new Directory();
     }
 
@@ -100,7 +100,7 @@ class PersistCommand extends Command
         $executeScriptMemory = memory_get_usage();
         $executeScriptTime = time();
 
-        $forceType = $input->getOption('type');
+        $forceSerial = $input->getOption('serial');
 
         $this->initialSetup();
 
@@ -109,8 +109,8 @@ class PersistCommand extends Command
         $serializeSerials = $this->getFiles($serializePath);
 
         foreach ($serializeSerials as $serialFolder) {
-            if (!empty($forceType)) {
-                if ($serialFolder != $forceType) {
+            if (!empty($forceSerial)) {
+                if ($serialFolder != $forceSerial) {
                     continue;
                 }
             }
@@ -156,6 +156,8 @@ class PersistCommand extends Command
 
                     $entityManager->persist($serializeData[$i]);
                 }
+
+                echo "\nType detected as \"$type\".";
 
                 try {
                     $entityManager->flush();

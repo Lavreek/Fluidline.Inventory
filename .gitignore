@@ -1,5 +1,9 @@
 /.idea
+/.bash_history
+/.cache
+/.viminfo
 
+/public_html
 /public/products/*
 
 ###> symfony/framework-bundle ###
