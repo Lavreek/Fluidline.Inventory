@@ -41,6 +41,22 @@ class LoadedController extends AbstractController
         ]);
     }
 
+    #[Route('/admin/loaded/{type}/{serials}/codes', name: 'admin_loaded_types_serials_codes')]
+    public function viewLoadedTypeSerialsCodes($type, $serials, ManagerRegistry $registry): Response
+    {
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $registry->getRepository(Inventory::class);
+
+        $codes = $inventoryRepository->findBy(['type' => $type, 'serial' => $serials]);
+
+        return $this->render('inventory/loaded/codes.html.twig', [
+            'user' => $this->getUser(),
+            'type' => $type,
+            'serials' => $serials,
+            'codes' => $codes
+        ]);
+    }
+
     #[Route('/admin/view/serial/{serial}', name: 'admin_view_products_by_serial')]
     public function viewProductsBySerial($serial, ManagerRegistry $registry): Response
     {

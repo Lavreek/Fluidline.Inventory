@@ -42,10 +42,219 @@ class PersistCommand extends Command
 
     protected function configure(): void
     {
+        $this->addOption('serial-folder', null, InputOption::VALUE_OPTIONAL,
+            'Какая серийная директория должна быть обработана?', '');
         $this->addOption('serial', null, InputOption::VALUE_OPTIONAL,
-            'Which serial could be serialized?', '');
+            'Какая серия должна быть обработана?', '');
+        $this->addOption('memory-limit', null, InputOption::VALUE_OPTIONAL,
+            'Включить ограничение ресурсов? Значение в МБ', '-1');
+        $this->addOption('more-than-one', null, InputOption::VALUE_OPTIONAL,
+            'Включить продолжение цикла для обработки?', false);
         $this->directories = new Directory();
     }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $this->initialSetup();
+
+        $this->setMemoryLimit($input->getOption('memory-limit'));
+        $forceSerialFolder = $input->getOption('serial-folder');
+        $forceSerial = $input->getOption('serial');
+        $moreThanOne = $input->getOption('more-than-one');
+
+        $serializePath = $this->directories->getSerializePath();
+        $serializeSerials = $this->getFiles($serializePath);
+
+        foreach ($serializeSerials as $serialFolder) {
+            if (!empty($forceSerialFolder) && $serialFolder != $forceSerialFolder) {
+                continue;
+            }
+
+            $serialFolderPath = $serializePath . $serialFolder;
+            $serialFolderFiles = $this->getFiles($serialFolderPath);
+
+            foreach ($serialFolderFiles as $serialFile) {
+                $filename = $serialFolderPath ."/". $serialFile;
+
+                $serial = $serialFolder;
+
+                preg_match('#([\w|\-|\s]*) \[.+\]#u', $serialFolder, $match);
+
+                if (isset($match[1])) {
+                    $serial = $match[1];
+                    echo "Found parent serial: $serial.\n";
+                }
+
+                $f = fopen($filename, 'r');
+
+                if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
+                    echo "Using: $serialFolder directory.\n";
+
+                    $entityManager = $this->getManager();
+
+                    /** @var InventoryRepository $inventory */
+                    $inventory = $entityManager->getRepository(Inventory::class);
+
+                    /** @var Inventory[] $serializeData */
+                    $serializeData = unserialize(stream_get_contents($f));
+
+                    $type = null;
+
+                    for ($i = 0; $i < count($serializeData); $i ++) {
+                        if ($serializeData[$i]->getSerial() != $serial) {
+                            $serializeData[$i]->setSerial($serial);
+                        }
+
+                        if (is_null($type) and !is_null($serializeData[$i]->getType())) {
+                            $type = $serializeData[$i]->getType();
+                        }
+
+                        $entityManager->persist($serializeData[$i]);
+                    }
+
+                    echo "Type detected as \"$type\".\n";
+
+                    try {
+                        $entityManager->flush();
+                        echo "In $serial - Inventory and InventoryParamhouse added.\n";
+
+                        $entityManager->clear();
+                    } catch (\Exception | \Throwable $e) {
+                        $inventory->removeBySerialType($serial, $type);
+
+                        echo "Flush error by $serialFolder in $filename\n" . $e->getMessage() ."\n";
+
+                        fclose($f);
+
+                        return Command::FAILURE;
+                    }
+
+                    $prices = $this->getVariable('prices');
+                    $images = $this->getVariable('images');
+                    $models = $this->getVariable('models');
+
+                    for ($i = 0; $i < count($serializeData); $i ++) {
+                        /** @var Inventory $code */
+                        $code = $inventory->findOneBy([
+                            'code' => $serializeData[$i]->getCode()
+                        ]);
+
+                        if (!is_null($code)) {
+                            $this->fillParameters($prices, $serial);
+
+                            $pricehouse = $code->getPrice();
+
+                            if (is_null($pricehouse)) {
+                                $pricehouse = new InventoryPricehouse();
+                            }
+
+                            $pricehouse->setValue(0);
+                            $pricehouse->setWarehouse(0);
+                            $pricehouse->setCode($code);
+                            $pricehouse->setCurrency('$');
+
+                            if ($prices['exist'] !== 2) {
+                                $prices['csv_content'] .= implode(';', [
+                                        $code->getCode(),
+                                        $pricehouse->getValue(),
+                                        $pricehouse->getWarehouse(),
+                                        $pricehouse->getCurrency()
+                                    ]) . "\n";
+                            }
+
+                            $this->fillParameters($images, $serial);
+                            $this->fillParameters($models, $serial);
+
+                            $attachmenthouse = $code->getAttachments();
+
+                            if (is_null($attachmenthouse)) {
+                                $attachmenthouse = new InventoryAttachmenthouse();
+                            }
+
+                            $attachmenthouse->setImage("/assets/inventory/default.png");
+
+                            if ($images['exist'] !== 2) {
+                                $images['csv_content'] .= implode(';', [
+                                        $code->getCode(),
+                                        $code->getId(),
+                                        $attachmenthouse->getImage()
+                                    ]) . "\n";
+                            }
+
+                            $attachmenthouse->setModel("");
+
+                            if ($models['exist'] !== 2) {
+                                $models['csv_content'] .= implode(';', [
+                                        $code->getCode(),
+                                        $code->getId(),
+                                        $attachmenthouse->getModel()
+                                    ]) . "\n";
+                            }
+
+                            $attachmenthouse->setCode($code);
+
+                            $entityManager->persist($pricehouse);
+                            $entityManager->persist($attachmenthouse);
+                        }
+                    }
+
+                    try {
+                        $entityManager->flush();
+
+                        echo "In $serial - InventoryAttachmenthouse added.\n";
+
+                        if ($prices['exist'] !== 2) {
+                            $this->writeToFile($prices['path'] . $serial . ".gen", $prices['csv_content']);
+                            echo "\tFile ". $prices['path'] . $serial . ".gen" ." - created.\n";
+                        }
+
+                        if ($images['exist'] !== 2) {
+                            $this->writeToFile($images['path'] . $serial . ".gen", $images['csv_content']);
+                            echo "\tFile ". $images['path'] . $serial . ".gen" ." - created.\n";
+                        }
+
+                        if ($models['exist'] !== 2) {
+                            $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
+                            echo "\tFile ". $models['path'] . $serial . ".gen" ." - created.\n";
+                        }
+
+                        $entityManager->clear();
+
+                    } catch (\Exception | \Throwable $e) {
+                        echo "In $serial - InventoryAttachmenthouse: ".$e->getMessage() .
+                            "\nFlush error by $serialFolder in \"attachments\" - $filename\n";
+
+                        $inventory->removeBySerialType($serial, $type);
+
+                        fclose($f);
+
+                        return Command::FAILURE;
+                    }
+
+                    fclose($f);
+
+                    unlink($filename);
+
+                    echo "File $filename unlinked.\n";
+
+                    if (count($serialFolderFiles) < 1) {
+                        rmdir($serialFolderPath);
+                    }
+                }
+
+                if ($would_block) {
+                    echo "Другой процесс уже удерживает блокировку файла";
+                }
+
+                if (!$moreThanOne) {
+                    return Command::SUCCESS;
+                }
+            }
+        }
+
+        return Command::SUCCESS;
+    }
+
 
     private function setVariable(string $variable, mixed $value)
     {
@@ -84,226 +293,8 @@ class PersistCommand extends Command
 
     private function getFiles(string $path): ?array
     {
-        if (is_dir($path)) {
-            $files = scandir($path);
-            $difference = ['..', '.', '.gitignore'];
-
-            return array_diff($files, $difference);
-        }
-
-        return null;
-    }
-
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        ini_set('memory_limit', self::max_memory_limit);
-        $executeScriptMemory = memory_get_usage();
-        $executeScriptTime = time();
-
-        $forceSerial = $input->getOption('serial');
-
-        $this->initialSetup();
-
-        $serializePath = $this->directories->getSerializePath();
-
-        $serializeSerials = $this->getFiles($serializePath);
-
-        foreach ($serializeSerials as $serialFolder) {
-            if (!empty($forceSerial)) {
-                if ($serialFolder != $forceSerial) {
-                    continue;
-                }
-            }
-
-            $serializeSerialsPath = $serializePath . $serialFolder . "/";
-
-            $serialFiles = $this->getFiles($serializeSerialsPath);
-
-            $filename = $serializeSerialsPath . array_shift($serialFiles);
-
-            $f = fopen($filename, 'r');
-
-            if (flock($f, LOCK_EX | LOCK_NB, $would_block)) {
-                echo "\nUsing: $serialFolder directory.";
-
-                preg_match_all('#([\w|\-|\s]*) \[.+\]#u', $serialFolder, $match);
-
-                if (isset($match[1][0])) {
-                    $serial = $match[1][0];
-                    echo "\nFound parent serial: $serial";
-                } else {
-                    $serial = $serialFolder;
-                }
-
-                $entityManager = $this->getManager();
-
-                /** @var InventoryRepository $inventory */
-                $inventory = $entityManager->getRepository(Inventory::class);
-
-                /** @var Inventory[] $serializeData */
-                $serializeData = unserialize(stream_get_contents($f));
-
-                $type = null;
-
-                for ($i = 0; $i < count($serializeData); $i ++) {
-                    if ($serializeData[$i]->getSerial() != $serial) {
-                        $serializeData[$i]->setSerial($serial);
-                    }
-
-                    if (is_null($type) and !is_null($serializeData[$i]->getType())) {
-                        $type = $serializeData[$i]->getType();
-                    }
-
-                    $entityManager->persist($serializeData[$i]);
-                }
-
-                echo "\nType detected as \"$type\".";
-
-                try {
-                    $entityManager->flush();
-                    echo "\nIn $serial - Inventory and InventoryParamhouse added.";
-
-                    $entityManager->clear();
-                } catch (\Exception | \Throwable $exception) {
-
-                    $inventory->removeBySerialType($serial, $type);
-
-                    $customMessage = "\nFlush error by $serialFolder in $filename\n";
-
-                    file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
-
-                    echo $customMessage;
-
-                    fclose($f);
-
-                    return Command::FAILURE;
-                }
-
-                $prices = $this->getVariable('prices');
-                $images = $this->getVariable('images');
-                $models = $this->getVariable('models');
-
-                for ($i = 0; $i < count($serializeData); $i ++) {
-                    /** @var Inventory $code */
-                    $code = $inventory->findOneBy([
-                        'code' => $serializeData[$i]->getCode()
-                    ]);
-
-                    if (!is_null($code)) {
-                        $this->fillParameters($prices, $serial);
-
-                        $pricehouse = $code->getPrice();
-
-                        if (is_null($pricehouse)) {
-                             $pricehouse = new InventoryPricehouse();
-                        }
-
-                        $pricehouse->setValue(0);
-                        $pricehouse->setWarehouse(0);
-                        $pricehouse->setCode($code);
-                        $pricehouse->setCurrency('$');
-
-                        if ($prices['exist'] !== 2) {
-                            $prices['csv_content'] .= implode(';', [
-                                $code->getCode(),
-                                $pricehouse->getValue(),
-                                $pricehouse->getWarehouse(),
-                                $pricehouse->getCurrency()
-                            ]) . "\n";
-                        }
-
-                        $this->fillParameters($images, $serial);
-                        $this->fillParameters($models, $serial);
-
-                        $attachmenthouse = $code->getAttachments();
-
-                        if (is_null($attachmenthouse)) {
-                             $attachmenthouse = new InventoryAttachmenthouse();
-                        }
-
-                        $attachmenthouse->setImage("/assets/inventory/default.png");
-
-                        if ($images['exist'] !== 2) {
-                            $images['csv_content'] .= implode(';', [
-                                $code->getCode(),
-                                $code->getId(),
-                                $attachmenthouse->getImage()
-                            ]) . "\n";
-                        }
-
-                        $attachmenthouse->setModel("");
-
-                        if ($models['exist'] !== 2) {
-                            $models['csv_content'] .= implode(';', [
-                                $code->getCode(),
-                                $code->getId(),
-                                $attachmenthouse->getModel()
-                            ]) . "\n";
-                        }
-
-                        $attachmenthouse->setCode($code);
-
-                        $entityManager->persist($pricehouse);
-                        $entityManager->persist($attachmenthouse);
-                    }
-                }
-
-                try {
-                    $entityManager->flush();
-
-                    echo "\nIn $serial - InventoryAttachmenthouse added.\n";
-
-                    if ($prices['exist'] !== 2) {
-                        $this->writeToFile($prices['path'] . $serial . ".gen", $prices['csv_content']);
-                        echo "\nFile ". $prices['path'] . $serial . ".gen" ." - created.";
-                    }
-
-                    if ($images['exist'] !== 2) {
-                        $this->writeToFile($images['path'] . $serial . ".gen", $images['csv_content']);
-                        echo "\nFile ". $images['path'] . $serial . ".gen" ." - created.";
-                    }
-
-                    if ($models['exist'] !== 2) {
-                        $this->writeToFile($models['path'] . $serial . ".gen", $models['csv_content']);
-                        echo "\nFile ". $models['path'] . $serial . ".gen" ." - created.";
-                    }
-
-                    $entityManager->clear();
-                } catch (\Exception | \Throwable $exception) {
-
-                    echo "\nIn $serial - InventoryAttachmenthouse: ".$exception->getMessage();
-
-                    $inventory->removeBySerialType($serial, $type);
-
-                    fclose($f);
-
-                    $customMessage = "\nFlush error by $serialFolder in \"attachments\" - $filename\n";
-
-                    file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . $customMessage . $exception->getMessage() . "\n", FILE_APPEND);
-
-                    return Command::FAILURE;
-                }
-
-                fclose($f);
-
-                unlink($filename);
-                echo "\n\nFile $filename unlinked.";
-
-                if (count($serialFiles) < 1) {
-                    rmdir($serializeSerialsPath);
-                }
-
-                $this->createLogfileResult($executeScriptTime, $executeScriptMemory);
-            }
-
-            if ($would_block) {
-                echo "Другой процесс уже удерживает блокировку файла";
-            }
-
-            file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . "Другой процесс уже удерживает блокировку файла\n" . FILE_APPEND);
-        }
-
-        return Command::SUCCESS;
+        $difference = ['..', '.', '.gitignore'];
+        return array_diff(scandir($path), $difference);
     }
 
     private function fillParameters(&$parameter, $serial)
@@ -375,16 +366,8 @@ class PersistCommand extends Command
         }
     }
 
-    private function createLogfileResult(int $start, int $memory): void
+    private function setMemoryLimit($memory) : void
     {
-        $currentDate = date('d-m-Y H:i:s');
-        $startDate = date('d-m-Y H:i:s', $start);
-
-        $startMemory = ($memory / 1024) / 1024;
-        $currentMemory = (memory_get_usage() / 1024) / 1024;
-        $riseMemory = $currentMemory - $startMemory;
-        $peakMemory = memory_get_peak_usage();
-
-        file_put_contents($this->directories->getLogfilePath(), "Symfony command: Persist\n" . "Процесс добавления продукции завершён\n" . "\tВремя начала: $startDate, Время завершения: $currentDate\n" . "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n" . "\tПик использования памяти: $peakMemory\n", FILE_APPEND);
+        ini_set('memory_limit', $memory);
     }
 }

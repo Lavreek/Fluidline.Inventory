@@ -23,135 +23,137 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'Crawler', description: 'Создание сериализованных образов продукции, как сущности "Inventory"')]
 final class CrawlerCommand extends Command
 {
-    /**
-     * Ограничение выставляемое процессу при работе на виртуальном хостинге
-     */
-    const max_memory_limit = '1024M';
-
-    /**
-     * Около максимальное количество элементов способных поместиться в лимит памяти
-     */
-    const max_products_count = 100000;
-
     private Directory $directories;
-
-    private mixed $container;
-
     private ObjectManager $manager;
 
     protected function configure(): void
     {
+        $this->addOption('type', null, InputOption::VALUE_OPTIONAL,
+            'Какой тип должен быть обработан?', '');
+        $this->addOption('serial', null, InputOption::VALUE_OPTIONAL,
+            'Какая серия должна быть обработана?', '');
         $this->addOption('file', null, InputOption::VALUE_OPTIONAL,
             'Какой файл должен быть обработан?', '');
         $this->addOption('big', null, InputOption::VALUE_OPTIONAL,
             'Включить в обработку большие ресурсы?', false);
+        $this->addOption('memory-limit', null, InputOption::VALUE_OPTIONAL,
+            'Включить ограничение ресурсов? Значение в МБ', '-1');
+        $this->addOption('max-products', null, InputOption::VALUE_OPTIONAL,
+            'Включить ограничение количества ресурсов? Значение в шт', '10000');
+        $this->addOption('more-than-one', null, InputOption::VALUE_OPTIONAL,
+            'Включить продолжение цикла для обработки?', false);
         $this->directories = new Directory();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        ini_set('memory_limit', self::max_memory_limit);
-
-        // -- Получение изначальной памяти
-        $executeScriptMemory = memory_get_usage();
-        $executeScriptTime = time();
-        // --
-
-        $forceFile = $input->getOption('file');
-        $bigFiles = $input->getOption('big');
-
+        $processed = 0;
         $this->initialSettings();
 
-        $crawlerPath = $this->directories->getCrawlerPath();
+        $this->setMemoryLimit($input->getOption('memory-limit'));
+        $maxProductCount = $input->getOption('max-products');
+        $forceType = $input->getOption('type');
+        $forceSerial = $input->getOption('serial');
+        $forceFile = $input->getOption('file');
+        $bigFiles = $input->getOption('big');
+        $moreThanOne = $input->getOption('more-than-one');
 
-        $crawlerTypes = $this->getFiles($crawlerPath);
+        $inventoryPath = $this->directories->getCrawlerPath();
+        $inventoryTypes = $this->getFiles($inventoryPath);
 
-        foreach ($crawlerTypes as $type) {
-            /** @var array $files Файлы продукции */
-            $files = $this->getFiles($crawlerPath . $type);
+        $this->optionalSettings($forceType, $forceSerial);
 
-            if (count($files) > 0) {
-                foreach ($files as $file) {
-                    if (!empty($forceFile)) {
-                        if ($file != $forceFile) {
-                            continue;
-                        }
-                    }
+        foreach ($inventoryTypes as $type) {
+            if (!empty($forceType) && $type != $forceType) {
+                continue;
+            }
 
-                    $fileinfo = pathinfo($file);
-                    $serial = $fileinfo['filename'];
+            $inventoryTypePath = $inventoryPath . $type;
+            $inventorySerials = $this->getFiles($inventoryTypePath);
 
-                    if ($this->checkFiles($type, $serial, $forceFile)) {
+            if (count($inventorySerials) < 0) {
+                continue;
+            }
+
+            foreach ($inventorySerials as $file1) {
+                $serialInfo = pathinfo($file1);
+
+                if (
+                    !empty($forceSerial) && $serialInfo['filename'] != $forceSerial or
+                    !empty($forceFile) && $serialInfo['basename'] != $forceFile
+                ) {
+                    continue;
+                }
+
+                $serial = $serialInfo['filename'];
+
+                if ($this->checkFiles($type, $serial, $forceFile)) {
+                    continue;
+                }
+
+                if (!$bigFiles) {
+                    if (file_exists($inventoryPath . "{$type}/{$serial}.big")) {
                         continue;
                     }
+                }
 
-                    if (!$bigFiles) {
-                        if (file_exists($crawlerPath . "{$type}/{$serial}.big")) {
-                            continue;
-                        }
-                    }
+                echo "Using type: $type | serial: $serial\n";
 
-                    echo "Using type: $type / serial: $serial\n";
+                $reader = new FileReader();
+                $reader->setReadDirectory($inventoryPath);
+                $reader->setFile($type . "/" . $file1);
+                $reader->setMaxProductCount($maxProductCount);
 
-                    $this->remove($serial, $type);
+                $products = $reader->executeCreate();
 
-                    $reader = new FileReader();
-                    $reader->setReadDirectory($crawlerPath);
-                    $reader->setFile($type . "/" . $file);
-                    $reader->setMaxProductCount(self::max_products_count);
-                    $products = $reader->executeCreate();
+                if (!is_array($products) and $products > $maxProductCount) {
+                    touch($inventoryPath . $type . "/" . $serial .".big");
+                    continue;
+                }
 
-                    if (!is_array($products) and $products > self::max_products_count) {
-                        touch($crawlerPath . $type . "/" . $serial .".big");
+                if (!$bigFiles) {
+                    if (count($products) > 500) {
+                        touch($inventoryPath . $type . "/" . $serial .".big");
                         continue;
                     }
+                }
 
-                    if (!$bigFiles) {
-                        if (count($products) > 500) {
-                            touch($crawlerPath . $type . "/" . $serial .".big");
-                            continue;
-                        }
+                $puller = new EntityPuller();
+                $puller->setLogfilePath(dirname($this->directories->getLogfilePath()));
+                $products = $puller->pullEntities($type, $serial, $products);
+
+                try {
+                    foreach (array_chunk($products, 250) as $chunkIndex => $chunk) {
+                        $filename = $chunkIndex . "-" . $file1;
+                        $this->serializeProducts($chunk, $serial, $filename);
                     }
 
-                    $puller = new EntityPuller();
-                    $puller->setLogfilePath(dirname($this->directories->getLogfilePath()));
-                    $products = $puller->pullEntities($type, $serial, $products);
+                } catch (\Exception | \Throwable $e) {
+                    echo "Serialize error in $serial file\n\t". $e->getMessage() ."\n";
+                    return Command::FAILURE;
+                }
 
-                    try {
-                        foreach (array_chunk($products, 250) as $chunkIndex => $chunk) {
-                            $filename = $chunkIndex . "-" . $file;
-                            $this->serializeProducts($chunk, $serial, $filename);
-                        }
-                    } catch (\Exception | \Throwable $exception) {
-                        $customMessage = "\n Serialize error in $serial file\n";
+                echo "$serial added.\n";
 
-                        file_put_contents($this->directories->getLogfilePath(), $customMessage . $exception->getMessage() . "\n");
+                $lockfile = $this->directories->getLocksPath() . $type . "/" . $serial . ".lock";
 
-                        echo $customMessage;
+                if (!$this->directories->checkPath(dirname($lockfile))) {
+                    $this->directories->createDirectory(dirname($lockfile));
+                }
 
-                        return Command::FAILURE;
-                    }
+                if (!file_exists($lockfile)) {
+                    touch($lockfile);
+                }
 
-                    $this->createLogfileResult($executeScriptTime, $executeScriptMemory);
+                $processed++;
 
-                    echo "\n$serial added.";
-
-                    $lockfile = $this->directories->getLocksPath() . $type . "/" . $serial . ".lock";
-
-                    if (!$this->directories->checkPath(dirname($lockfile))) {
-                        $this->directories->createDirectory(dirname($lockfile));
-                    }
-
-                    if (!file_exists($lockfile)) {
-                        touch($lockfile);
-                    }
-
+                if (!$moreThanOne) {
                     return Command::SUCCESS;
                 }
             }
         }
 
-        echo "\nSerials to adding in queue is not exist.";
+        echo "Serials to adding in queue is not existed.\nProcessed count: $processed.\n";
 
         return Command::SUCCESS;
     }
@@ -199,6 +201,13 @@ final class CrawlerCommand extends Command
         $this->directories->setProductsPath($container->getParameter('products'));
     }
 
+    private function optionalSettings(string $type, string $serial)
+    {
+        if (!empty($serial) and !empty($type)) {
+            $this->remove($serial, $type);
+        }
+    }
+
     private function remove(string $serial, string $type): void
     {
         $entityManager = $this->getManager();
@@ -226,26 +235,17 @@ final class CrawlerCommand extends Command
         file_put_contents($serialSerializePath . $filename . ".serial", serialize($products));
     }
 
+    private function getManager(): ObjectManager
+    {
+        return $this->manager;
+    }
     private function setManager(ObjectManager $registry): void
     {
         $this->manager = $registry;
     }
 
-    private function getManager(): ObjectManager
+    private function setMemoryLimit($memory) : void
     {
-        return $this->manager;
-    }
-
-    private function createLogfileResult(int $start, int $memory): void
-    {
-        $currentDate = date('d-m-Y H:i:s');
-        $startDate = date('d-m-Y H:i:s', $start);
-
-        $startMemory = ($memory / 1024) / 1024;
-        $currentMemory = (memory_get_usage() / 1024) / 1024;
-        $riseMemory = $currentMemory - $startMemory;
-        $peakMemory = memory_get_peak_usage();
-
-        file_put_contents($this->directories->getLogfilePath(), "Symfony command: ImagesPuller\n" . "Процесс завершён добавления изображений завершён\n" . "\tВремя начала: $startDate, Время завершения: $currentDate\n" . "\tИзначальное потребление памяти: $startMemory Мб, Возрастание к концу: $riseMemory\n" . "\tПик использования памяти: $peakMemory\n", FILE_APPEND);
+        ini_set('memory_limit', $memory);
     }
 }
