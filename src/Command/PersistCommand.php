@@ -50,6 +50,8 @@ class PersistCommand extends Command
             'Включить ограничение ресурсов? Значение в МБ', '-1');
         $this->addOption('more-than-one', null, InputOption::VALUE_OPTIONAL,
             'Включить продолжение цикла для обработки?', false);
+        $this->addOption('skip-serials', null, InputOption::VALUE_OPTIONAL,
+            'Какие серии должны быть пропущены?', '');
         $this->directories = new Directory();
     }
 
@@ -61,6 +63,7 @@ class PersistCommand extends Command
         $forceSerialFolder = $input->getOption('serial-folder');
         $forceSerial = $input->getOption('serial');
         $moreThanOne = $input->getOption('more-than-one');
+        $skipSerials = explode(',', $input->getOption('skip-serials'));
 
         $serializePath = $this->directories->getSerializePath();
         $serializeSerials = $this->getFiles($serializePath);
@@ -73,6 +76,11 @@ class PersistCommand extends Command
             $serialFolderPath = $serializePath . $serialFolder;
             $serialFolderFiles = $this->getFiles($serialFolderPath);
 
+            if (count($serialFolderFiles) === 0) {
+                rmdir($serialFolderPath);
+                continue;
+            }
+
             foreach ($serialFolderFiles as $serialFile) {
                 $filename = $serialFolderPath ."/". $serialFile;
 
@@ -83,6 +91,13 @@ class PersistCommand extends Command
                 if (isset($match[1])) {
                     $serial = $match[1];
                     echo "Found parent serial: $serial.\n";
+                }
+
+                if (
+                    (!empty($forceSerial) && $serial != $forceSerial) or
+                    in_array($serial, $skipSerials)
+                ) {
+                    continue;
                 }
 
                 $f = fopen($filename, 'r');
@@ -237,7 +252,7 @@ class PersistCommand extends Command
 
                     echo "File $filename unlinked.\n";
 
-                    if (count($serialFolderFiles) < 1) {
+                    if (count($serialFolderFiles) == 1) {
                         rmdir($serialFolderPath);
                     }
                 }
