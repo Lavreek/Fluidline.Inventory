@@ -37,7 +37,7 @@ class DeleteController extends AbstractController
     {
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $registry->getRepository(Inventory::class);
-        $inventoryRepository->removeBySerialType($serial, $type);
+        $inventoryRepository->removeSerialByType($serial, $type);
 
         $productsPath = $this->getParameter('products');
 

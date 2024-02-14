@@ -58,6 +58,7 @@ final class CrawlerCommand extends Command
         $bigFiles = $input->getOption('big');
         $moreThanOne = $input->getOption('more-than-one');
 
+        $bigSerialsPath = $this->directories->getBigsPath();
         $inventoryPath = $this->directories->getCrawlerPath();
         $inventoryTypes = $this->getFiles($inventoryPath);
 
@@ -71,7 +72,7 @@ final class CrawlerCommand extends Command
             $inventoryTypePath = $inventoryPath . $type;
             $inventorySerials = $this->getFiles($inventoryTypePath);
 
-            if (count($inventorySerials) < 0) {
+            if (count($inventorySerials) < 1) {
                 continue;
             }
 
@@ -87,33 +88,59 @@ final class CrawlerCommand extends Command
 
                 $serial = $serialInfo['filename'];
 
-                if ($this->checkFiles($type, $serial, $forceFile)) {
-                    continue;
-                }
+                if ($this->checkSerialByType($serial, $type)) {
+                    $serialLock = $this->directories->getLocksPath(). $type . "/". $serial . ".lock";
 
-                if (!$bigFiles) {
-                    if (file_exists($inventoryPath . "{$type}/{$serial}.big")) {
-                        continue;
+                    if (!$this->directories->checkPath(dirname($serialLock))) {
+                        $this->directories->createDirectory(dirname($serialLock));
+                    }
+
+                    if (!file_exists($serialLock)) {
+                        touch($serialLock);
                     }
                 }
 
-                echo "Using type: $type | serial: $serial\n";
+                if (
+                    ($this->checkFiles($type, $serial, $forceFile)) or
+                    (!$bigFiles && file_exists($bigSerialsPath . "{$type}/{$serial}.big"))
+                ) {
+                    continue;
+                }
+
+                echo "Crawl Serial: $serial by Type: $type \n";
 
                 $reader = new FileReader();
                 $reader->setReadDirectory($inventoryPath);
                 $reader->setFile($type . "/" . $file1);
-                $reader->setMaxProductCount($maxProductCount);
 
                 $products = $reader->executeCreate();
-
-                if (!is_array($products) and $products > $maxProductCount) {
-                    touch($inventoryPath . $type . "/" . $serial .".big");
-                    continue;
-                }
+                $productsCount = count($products['codes']);
 
                 if (!$bigFiles) {
-                    if (count($products) > 500) {
-                        touch($inventoryPath . $type . "/" . $serial .".big");
+                    if ($productsCount > $maxProductCount) {
+                        if (!$this->directories->checkPath($bigSerialsPath . $type)) {
+                            $this->directories->createDirectory($bigSerialsPath . $type);
+                        }
+
+                        touch($bigSerialsPath . $type . "/" . $serial .".big");
+                        echo "Count of products is too high to serialize.\n";
+
+                        if (!$moreThanOne) {
+                            return Command::FAILURE;
+
+                        } else {
+                            continue;
+                        }
+                    }
+                }
+
+                if (count($products) < 1) {
+                    echo "Product after create process is empty.\n";
+
+                    if (!$moreThanOne) {
+                        return Command::FAILURE;
+
+                    } else {
                         continue;
                     }
                 }
@@ -215,7 +242,7 @@ final class CrawlerCommand extends Command
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $entityManager->getRepository(Inventory::class);
 
-        $inventoryRepository->removeBySerialType($serial, $type);
+        $inventoryRepository->removeSerialByType($serial, $type);
     }
 
     private function getFiles($path): array
@@ -247,5 +274,21 @@ final class CrawlerCommand extends Command
     private function setMemoryLimit($memory) : void
     {
         ini_set('memory_limit', $memory);
+    }
+
+    private function checkSerialByType($serial, $type) : bool
+    {
+        $manager = $this->getManager();
+
+        /** @var InventoryRepository $inventoryRepository */
+        $inventoryRepository = $manager->getRepository(Inventory::class);
+
+        $inventory = $inventoryRepository->getSerialExist(serial: $serial, type: $type);
+
+        if ($inventory) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -60,7 +60,7 @@ class InventoryCreateController extends AbstractController
             try {
                 /** @var InventoryRepository $inventoryRepository */
                 $inventoryRepository = $manager->getRepository(Inventory::class);
-                $inventoryRepository->removeBySerialType($inventory_serial, $inventory_type);
+                $inventoryRepository->removeSerialByType($inventory_serial, $inventory_type);
 
                 $chunkCount = 0;
                 foreach (array_chunk($products, 1000) as $chunkIndex => $chunk) {

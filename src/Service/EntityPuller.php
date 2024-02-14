@@ -6,9 +6,7 @@ use App\Entity\Inventory\InventoryParamhouse;
 
 class EntityPuller
 {
-
     private string $memory = "";
-
     private string $logpath = "";
 
     private function setMemory($value)
@@ -21,6 +19,7 @@ class EntityPuller
         $newEntities = [];
 
         for ($i = 0; $i < count($products['codes']); $i++) {
+
             $code = $products['codes'][$i];
             $parameters = $products['parameters'][$i];
             $naming = $products['naming'][$i];

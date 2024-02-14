@@ -7,8 +7,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class FileReader extends FileHelper
 {
-    private int $maxProductsCount;
-
     private array $products = [];
 
     private array $parameters = [];
@@ -24,12 +22,6 @@ class FileReader extends FileHelper
 
     private UploadedFile|string $file;
 
-    public function setMaxProductCount($count) : self
-    {
-        $this->maxProductsCount = $count;
-
-        return $this;
-    }
 
     public function setReadDirectory($readDirectory): void
     {
@@ -197,18 +189,12 @@ class FileReader extends FileHelper
             $CSVProducts = $newProducts;
         }
 
-        if (count($CSVProducts) > $this->maxProductsCount) {
-            echo "Количество продуктов превышает допустимое: {$this->maxProductsCount}\n";
-            return count($CSVProducts);
-        }
-
         return $CSVProducts;
     }
 
     private function getCSVValues($file): array
     {
         $row = 0;
-
         $delimiter = $this->getFileDelimiter($file);
 
         if (
@@ -221,9 +207,7 @@ class FileReader extends FileHelper
         $values = $parameters = $naming = [];
 
         while ($data = fgetcsv($file, separator: $delimiter)) {
-            //if (!preg_match('#\##', $data[0]) and $row === 0) {
-            //    throw new \Exception("\nFirst column must be empty with heading \"#\"\n");
-            //}
+
             unset($data[0]);
             $data = array_values($data);
 
@@ -300,7 +284,7 @@ class FileReader extends FileHelper
         }
 
         $products = $this->getProducts(
-            $this->getCSVValues($file)
+            $csvValues = $this->getCSVValues($file)
         );
 
         // TODO: SPECIAL MODIFICATIONS "$this->special"

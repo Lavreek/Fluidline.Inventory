@@ -11,10 +11,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'ImagesPuller', description: 'Загрузка изображений для продукции')]
-class ImagesPullerCommand extends Command
+#[AsCommand(name: 'PricesPuller', description: 'Добавление основных цен на продукцию')]
+class PricesPullerCommand extends Command
 {
     private Directory $directories;
+
     private ObjectManager $manager;
 
     protected function configure(): void
@@ -37,18 +38,18 @@ class ImagesPullerCommand extends Command
 
         $this->setMemoryLimit($input->getOption('memory-limit'));
         $forceFile = $input->getOption('file');
-        $forceSerial = $input->getOption('serial');
+        $forceSerial = $input->getOption('file');
         $moreThanOne = $input->getOption('more-than-one');
 
-        $locksFilepath = $this->directories->getLocksPath() . "images/";
+        $locksFilepath = $this->directories->getLocksPath() . "prices/";
         if (!$this->directories->checkPath($locksFilepath)) {
             $this->directories->createDirectory($locksFilepath);
         }
 
-        $imagesPath = $this->directories->getImagePath();
-        $imagesFiles = $this->getFiles($imagesPath);
+        $pricesPath = $this->directories->getPricePath();
+        $pricesFiles = $this->getFiles($pricesPath);
 
-        foreach ($imagesFiles as $file) {
+        foreach ($pricesFiles as $file) {
             if (!empty($forceFile) && $file != $forceFile) {
                 continue;
             }
@@ -73,66 +74,35 @@ class ImagesPullerCommand extends Command
                 continue;
             }
 
-            echo "ImagesPuller Serial: $serial.\n";
-
-            $file = fopen($imagesPath . $file, 'r');
+            $file = fopen($pricesPath . $file, 'r');
 
             if (flock($file, LOCK_EX | LOCK_NB, $would_block)) {
                 $manager = $this->getManager();
-
                 $inventoryRepository = $manager->getRepository(Inventory::class);
-
-                $inventory = $inventoryRepository->findOneBy([
-                    'serial' => $fileinfo['filename']
-                ]);
-
-                if (is_null($inventory)) {
-                    fclose($file);
-                    continue;
-                }
-
-                echo "Executing process in serial {$fileinfo['filename']}\n";
 
                 $rowPosition = 0;
 
-                $header = [];
-
                 while ($row = fgetcsv($file, separator: ';')) {
-                    if ($rowPosition == 0) {
-                        $header = $row;
+                    if ($rowPosition > 0) {
+                        if (isset($row[0], $row[1], $row[2], $row[3])) {
+                            if (!empty($row[0]) and !empty($row[3])) { // row[1] and row[2] can be zero
+                                $inventory = $inventoryRepository->findOneBy([
+                                    'code' => $row[0],
+                                    'serial' => $fileinfo['filename']
+                                ]);
 
-                    } else {
-                        if (in_array('code', $header)) {
-                            $position = array_search('code', $header);
+                                if (!is_null($inventory)) {
+                                    echo "Update: ". $inventory->getCode() ."\n";
+                                    $price = $inventory->getPrice();
 
-                            $inventory = $inventoryRepository->findOneBy([
-                                'serial' => $fileinfo['filename'],
-                                'code' => $row[$position]
-                            ]);
-                        } elseif (in_array('code_id', $header)) {
-                            $position = array_search('code_id', $header);
+                                    $price->setValue($row[1]);
+                                    $price->setWarehouse($row[2]);
+                                    $price->setCurrency($row[3]);
 
-                            $inventory = $inventoryRepository->findOneBy([
-                                'serial' => $fileinfo['filename'],
-                                'code_id' => $row[$position]
-                            ]);
-                        } else {
-                            break;
-                        }
+                                    $manager->persist($inventory);
 
-                        if (!is_null($inventory)) {
-                            if (in_array('image_path', $header)) {
-                                $position = array_search('image_path', $header);
-
-                                echo "Using code: ". $inventory->getCode() ."\n";
-                                $attachment = $inventory->getAttachments();
-
-                                echo "Setting image: ". $row[$position] ."\n";
-                                $attachment->setImage($row[$position]);
-
-                                $manager->persist($attachment);
-
-                                $processed++;
+                                    $processed++;
+                                }
                             }
                         }
                     }
@@ -152,7 +122,7 @@ class ImagesPullerCommand extends Command
                 echo "Другой процесс уже удерживает блокировку файла";
             }
 
-            echo "ImagesPuller processed $processed codes.\n";
+            echo "PricesPuller processed $processed codes.\n";
 
             if (!$moreThanOne) {
                 return Command::SUCCESS;
@@ -178,12 +148,7 @@ class ImagesPullerCommand extends Command
 
     private function getFiles(string $path): array
     {
-        $difference = [
-            '.',
-            '..',
-            '.gitignore',
-            'example.csv'
-        ];
+        $difference = ['.', '..', '.gitignore'];
         return array_diff(scandir($path), $difference);
     }
 

@@ -2,6 +2,7 @@
 namespace App\Repository\Inventory;
 
 use App\Entity\Inventory\Inventory;
+use App\Entity\Inventory\InventoryAttachmenthouse;
 use App\Entity\Inventory\InventoryParamhouse;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
@@ -21,10 +22,32 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class InventoryRepository extends ServiceEntityRepository
 {
+    private ManagerRegistry $registry;
 
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Inventory::class);
+        $this->registry = $registry;
+    }
+
+    public function deleteEmpty()
+    {
+        $em = $this->getEntityManager();
+        $expr = $em->getExpressionBuilder();
+
+        $this->createQueryBuilder('i')
+            ->delete()
+            ->andWhere(
+                $expr->notIn('i.id',
+                    $em->createQueryBuilder()
+                        ->select('IDENTITY(p.code)')
+                        ->from(InventoryAttachmenthouse::class, 'p')
+                        ->getDQL()
+                )
+            )
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     public function codeSearch(string $code): array|bool|null
@@ -156,13 +179,13 @@ class InventoryRepository extends ServiceEntityRepository
 
         $havingKeys = $havingValues = [];
 
-        if (! is_null($order)) {
+        if (!is_null($order)) {
             foreach ($order as $item) {
-                if (! in_array($item['key'], $havingKeys)) {
+                if (!in_array($item['key'], $havingKeys)) {
                     $havingKeys[] = $item['key'];
                 }
 
-                if (! in_array($item['value'], $havingValues)) {
+                if (!in_array($item['value'], $havingValues)) {
                     $havingValues[] = $item['value'];
                 }
             }
@@ -178,7 +201,7 @@ class InventoryRepository extends ServiceEntityRepository
         }
     }
 
-    public function removeBySerialType(string $serial, string $type): void
+    public function removeSerialByType(string $serial, string $type): void
     {
         $this->createQueryBuilder('i')
             ->delete(Inventory::class, 'i')
