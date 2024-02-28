@@ -1,0 +1,14 @@
+{% extends 'admin.html.twig' %}
+
+{% block title %}Загрузка цен на продукцию{% endblock %}
+
+{% block content %}
+    <div class="upload">
+        <h1 class="upload-title">Загрузка цен на продукцию</h1>
+        <p>Загрузите пример, чтобы понять, какие файлы можно загружать
+            <a href="{{ asset('examples/upload_price_example.csv') }}" download="example.csv">Скачать</a>
+        </p>
+        {{ form_start(upload_form) }}
+        {{ form_end(upload_form) }}
+    </div>
+{% endblock %}

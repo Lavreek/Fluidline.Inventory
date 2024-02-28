@@ -66,9 +66,8 @@ class PersistCommand extends Command
         $serializeSerials = $this->getFiles($serializePath);
 
         $processedFilepath = $this->directories->getSerializePath() . 'processed.json';
-
         if (file_exists($processedFilepath)) {
-            $processed = json_decode( file_get_contents($processedFilepath), true );
+            $processed = json_decode( file_get_contents($processedFilepath), true);
         }
 
         foreach ($serializeSerials as $serialFolder) {
@@ -121,8 +120,8 @@ class PersistCommand extends Command
                         }
                     }
 
-                    $this->persistSerializedData($f, $serializeData, $serial, $serialFolder, $filename);
-                    $this->persistAttachments($f, $serializeData, $serial, $serialFolder, $filename);
+                    $this->persistSerializedData($serializeData, $serial, $serialFolder, $filename);
+                    $this->persistAttachments($serializeData, $serial, $serialFolder, $filename);
 
                     fclose($f);
 
@@ -148,7 +147,7 @@ class PersistCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function persistSerializedData(&$f, $serializeData, $serial, $folder, $filename)
+    private function persistSerializedData($serializeData, $serial, $folder, $filename)
     {
         $manager = $this->getManager();
 
@@ -176,13 +175,12 @@ class PersistCommand extends Command
 
         } catch (\Exception | \Throwable $e) {
             echo "Flush error by $folder in $filename\n" . $e->getMessage() ."\n";
-
-            fclose($f);
             die();
         }
+
     }
 
-    private function persistAttachments(&$f, $serializeData, $serial, $folder, $filename)
+    private function persistAttachments($serializeData, $serial, $folder, $filename)
     {
         $manager = $this->getManager();
 
@@ -289,8 +287,6 @@ class PersistCommand extends Command
                 $this->directories->getSerializePath() . "processed.json",
                 json_encode(['filename' => $filename])
             );
-
-            fclose($f);
             die();
         }
     }
@@ -338,7 +334,7 @@ class PersistCommand extends Command
 
     private function getFiles(string $path): ?array
     {
-        $difference = ['..', '.', '.gitignore'];
+        $difference = ['..', '.', '.gitignore', 'processed.json'];
         return array_diff(scandir($path), $difference);
     }
 

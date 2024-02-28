@@ -1,21 +1,23 @@
-._navigation {
-    left: 0;
-    top: 0;
-    border-right: 1px solid rgba(128, 128, 128, 0.5);
-    padding: 2em 0;
+.navigation {
+    &-container {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid rgba(128, 128, 128, 0.5);
+        padding: 2em 0;
 
-    ._link {
-        display: block;
-        font-size: 16px;
-        padding: .5rem 1rem;
-        color: black;
-        font-weight: 400;
-        font-family: 'Inter';
-        text-decoration: none;
-        transition: .5s;
+        ._link {
+            display: block;
+            font-size: 16px;
+            padding: .5rem 1rem;
+            color: black;
+            font-weight: 400;
+            font-family: 'Inter';
+            text-decoration: none;
+            transition: .5s;
 
-        &:hover {
-            color: #2563EB;
+            &:hover {
+                color: #2563EB;
+            }
         }
     }
 }

@@ -1,0 +1,17 @@
+.upload {
+    display: flex;
+    flex-direction: column;
+    row-gap: 1em;
+    width: 100%;
+    padding: 2em 0;
+
+    &-title {
+        font-size: 20px;
+    }
+
+    &-form {
+        display: flex;
+        flex-direction: column;
+        row-gap: .5em;
+    }
+}

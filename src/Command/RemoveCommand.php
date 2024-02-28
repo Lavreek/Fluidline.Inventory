@@ -8,11 +8,9 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'Remove',
@@ -59,21 +57,11 @@ class RemoveCommand extends Command
         $inventoryRepository = $this->getManager()->getRepository(Inventory::class);
         $inventoryRepository->removeSerialByType($serial, $type);
 
-        if (file_exists($bigFilepath)) {
-            unlink($bigFilepath);
-        }
-        
-        if (file_exists($locksFilepath)) {
-            unlink($locksFilepath);
-        }
+        $this->removeLoadedFile($bigFilepath);
+        $this->removeLoadedFile($locksFilepath);
+        $this->removeLoadedFile($imagesLocksFilepath);
+        $this->removeLoadedFile($pricesLocksFilepath);
 
-        if (file_exists($imagesLocksFilepath)) {
-            unlink($imagesLocksFilepath);
-        }
-
-        if (file_exists($pricesLocksFilepath)) {
-            unlink($pricesLocksFilepath);
-        }
         
         if (is_dir($serializeFilepath)) {
             $serializedFiles = scandir($serializeFilepath);
@@ -83,7 +71,7 @@ class RemoveCommand extends Command
 
                 if (isset($fileinfo['extension'])) {
                     if ($fileinfo['extension'] === "serial") {
-                        unlink($serializeFilepath . $file);
+                        $this->removeLoadedFile($serializeFilepath . $file);
                         unset($serializedFiles[$index]);
                     }
                 }
@@ -121,5 +109,12 @@ class RemoveCommand extends Command
     private function setManager(ObjectManager $registry): void
     {
         $this->manager = $registry;
+    }
+
+    private function removeLoadedFile($path)
+    {
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 }

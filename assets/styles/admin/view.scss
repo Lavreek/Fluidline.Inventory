@@ -1,0 +1,11 @@
+$admin-column-gap : 1em;
+
+.admin {
+    &-container {
+        display: grid;
+        grid-template-columns: calc(25% - $admin-column-gap / 2) calc(75% - $admin-column-gap / 2);
+        column-gap: $admin-column-gap;
+
+        min-height: 100vh;
+    }
+}

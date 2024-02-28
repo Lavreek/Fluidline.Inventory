@@ -7,15 +7,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class HomepageController extends AbstractController
 {
-
-    #[Route('/', name: 'app_root')]
-    public function root(): Response
-    {
-        return $this->redirectToRoute('app_home');
-    }
-
-    #[Route('/home', name: 'app_home')]
-    #[Route('/homepage', name: 'app_homepage')]
+    #[Route(['/', '/home', '/homepage'], name: 'app_home')]
     public function home(): Response
     {
         $user = $this->getUser();

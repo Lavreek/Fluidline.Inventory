@@ -25,9 +25,13 @@ class UserExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('getUserRole', [
+            new TwigFunction('isAdmin', [
                 UserRuntime::class,
-                'getUserRole'
+                'isAdmin'
+            ]),
+            new TwigFunction('isUser', [
+                UserRuntime::class,
+                'isUser'
             ])
         ];
     }

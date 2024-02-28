@@ -81,6 +81,7 @@ class PricesPullerCommand extends Command
                 $inventoryRepository = $manager->getRepository(Inventory::class);
 
                 $rowPosition = 0;
+                $entityUpdated = 0;
 
                 while ($row = fgetcsv($file, separator: ';')) {
                     if ($rowPosition > 0) {
@@ -102,6 +103,7 @@ class PricesPullerCommand extends Command
                                     $manager->persist($inventory);
 
                                     $processed++;
+                                    $entityUpdated++;
                                 }
                             }
                         }
@@ -113,7 +115,9 @@ class PricesPullerCommand extends Command
                 $manager->flush();
                 $manager->clear();
 
-                touch($locksFilepath . $serial . ".lock");
+                if ($entityUpdated > 0) {
+                    touch($locksFilepath . $serial . ".lock");
+                }
 
                 fclose($file);
             }

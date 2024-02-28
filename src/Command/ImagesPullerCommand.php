@@ -27,6 +27,8 @@ class ImagesPullerCommand extends Command
             'Включить продолжение цикла для обработки?', false);
         $this->addOption('memory-limit', null, InputOption::VALUE_OPTIONAL,
             'Включить ограничение ресурсов? Значение в МБ', '-1');
+        $this->addOption('isset-break', null, InputOption::VALUE_OPTIONAL,
+            'Отключить, если серия не найдена?', false);
         $this->directories = new Directory();
     }
 
@@ -39,6 +41,7 @@ class ImagesPullerCommand extends Command
         $forceFile = $input->getOption('file');
         $forceSerial = $input->getOption('serial');
         $moreThanOne = $input->getOption('more-than-one');
+        $issetBreak = $input->getOption('isset-break');
 
         $locksFilepath = $this->directories->getLocksPath() . "images/";
         if (!$this->directories->checkPath($locksFilepath)) {
@@ -94,6 +97,7 @@ class ImagesPullerCommand extends Command
                 echo "Executing process in serial {$fileinfo['filename']}\n";
 
                 $rowPosition = 0;
+                $entityUpdated = 0;
 
                 $header = [];
 
@@ -133,6 +137,12 @@ class ImagesPullerCommand extends Command
                                 $manager->persist($attachment);
 
                                 $processed++;
+                                $entityUpdated++;
+                            }
+                        } else {
+                            if ($rowPosition === 1 && $issetBreak) {
+                                echo "Probably $serial serial is not isset";
+                                return Command::FAILURE;
                             }
                         }
                     }
@@ -143,7 +153,9 @@ class ImagesPullerCommand extends Command
                 $manager->flush();
                 $manager->clear();
 
-                touch($locksFilepath . $serial . ".lock");
+                if ($entityUpdated > 0) {
+                    touch($locksFilepath . $serial . ".lock");
+                }
 
                 fclose($file);
             }

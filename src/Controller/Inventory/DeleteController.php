@@ -1,49 +1,59 @@
 <?php
 namespace App\Controller\Inventory;
 
+use App\Command\Helper\Directory;
 use App\Entity\Inventory\Inventory;
-use App\Form\Remover\BySerialType;
 use App\Repository\Inventory\InventoryRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class DeleteController extends AbstractController
 {
-
-//    #[Route('/remove/by/serial', name: 'app_remove_by_serial')]
-//    public function bySerial(Request $request, ManagerRegistry $registry): Response
-//    {
-//        $removeForm = $this->createForm(BySerialType::class);
-//        $removeForm->handleRequest($request);
-//
-//        if ($removeForm->isSubmitted() and $removeForm->isValid()) {
-//            $formData = $removeForm->getData();
-//
-//            /** @var InventoryRepository $inventoryRepository */
-//            $inventoryRepository = $registry->getRepository(Inventory::class);
-//            $inventoryRepository->removeBySerialType($formData['serial'], $formData['type']);
-//        }
-//
-//        return $this->render('inventory/remover/index.html.twig', [
-//            'remove_form' => $removeForm->createView()
-//        ]);
-//    }
-
     #[Route('/delete/{type}/{serial}', name: 'delete_type_serial')]
     public function deleteTypeSerial($type, $serial, ManagerRegistry $registry): Response
     {
+        $directories = new Directory();
+        $directories->setProductsPath($this->getParameter('products'));
+
         /** @var InventoryRepository $inventoryRepository */
         $inventoryRepository = $registry->getRepository(Inventory::class);
         $inventoryRepository->removeSerialByType($serial, $type);
 
-        $productsPath = $this->getParameter('products');
+        $bigSerialsPath = $directories->getBigsPath();
+        $locksSerialsPath = $directories->getLocksPath();
+        $serializedSerialsPath = $directories->getSerializePath();
 
-        $this->removeLoadedFile($productsPath ."images/$serial.lock");
-        $this->removeLoadedFile($productsPath ."prices/$serial.lock");
-        $this->removeLoadedFile($productsPath ."locks/{$type}/$serial.lock");
+        $bigFilepath = $bigSerialsPath . $type ."/". $serial .".big";
+        $locksFilepath = $locksSerialsPath . $type ."/". $serial .".lock";
+        $imagesLocksFilepath = $locksSerialsPath . "images/". $serial .".lock";
+        $pricesLocksFilepath = $locksSerialsPath . "prices/". $serial .".lock";
+        $serializeFilepath = $serializedSerialsPath . $serial . "/";
+
+        $this->removeLoadedFile($bigFilepath);
+        $this->removeLoadedFile($locksFilepath);
+        $this->removeLoadedFile($imagesLocksFilepath);
+        $this->removeLoadedFile($pricesLocksFilepath);
+
+        if (is_dir($serializeFilepath)) {
+            $serializedFiles = scandir($serializeFilepath);
+
+            foreach (scandir($serializeFilepath) as $index => $file) {
+                $fileinfo = pathinfo($file);
+
+                if (isset($fileinfo['extension'])) {
+                    if ($fileinfo['extension'] === "serial") {
+                        $this->removeLoadedFile($serializeFilepath . $file);
+                        unset($serializedFiles[$index]);
+                    }
+                }
+            }
+
+            if (count($serializedFiles) == 2) {
+                rmdir($serializeFilepath);
+            }
+        }
 
         return $this->redirectToRoute('admin_loaded_types');
     }

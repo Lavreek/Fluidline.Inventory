@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{% endblock %}
+
+{% block body %}
+    <div class="admin-container">
+        {{ include('layouts/navigation.html.twig') }}
+        {% block content %}{% endblock %}
+    </div>
+{% endblock %}
