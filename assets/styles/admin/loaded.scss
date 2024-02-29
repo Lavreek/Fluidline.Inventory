@@ -8,3 +8,40 @@
     display: flex;
     column-gap: 20px;
 }
+
+.loaded {
+    &-categories, &-serials {
+        display: flex;
+        flex-direction: column;
+        padding: 2em 0;
+        row-gap: .5em;
+
+        .item-container {
+            display: flex;
+            width: 100%;
+            border-bottom: 1px solid rgba(128, 128, 128, .5);
+            padding: .5em;
+            column-gap: 1em;
+
+            .link {
+                font-size: 16px;
+                text-decoration: none;
+                color: black;
+                transition: .5s;
+
+                &:hover {
+                    color: #2563EB;
+                }
+            }
+        }
+    }
+
+    &-serials { }
+
+    &-codes {
+        display: flex;
+        flex-direction: column;
+        padding: 2em 0;
+        row-gap: .5em;
+    }
+}

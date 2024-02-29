@@ -33,4 +33,11 @@ class UserRuntime extends AbstractController implements RuntimeExtensionInterfac
 
         return false;
     }
+
+    public function getUsername() : string
+    {
+        $user = $this->getUser();
+
+        return $user->getUserIdentifier();
+    }
 }

@@ -10,11 +10,11 @@
                     <a class="d-block logo-block fl_position-center" href="https://www.fluid-line.ru/">
                         <img class="d-block logo-image" src="{{ asset('assets/images/logo-white.svg') }}" alt="LOGO">
                     </a>
-                    {% if inventory_user %}
+                    {% if isUser() %}
                         <a class="
                                 d-flex align-items-center text-decoration-none fl_font-family-primary
                                 fl_text-color-white position-absolute fl_position-center-right
-                            " href="{{ path('auth_account') }}" style="margin: 0 1em;">Здравствуйте, {{ inventory_user.userIdentifier }}</a>
+                            " href="{{ path('auth_account') }}" style="margin: 0 1em;">Здравствуйте, {{ getUsername() }}</a>
                     {% else %}
                         <a class="
                                 d-flex align-items-center text-decoration-none fl_font-family-primary

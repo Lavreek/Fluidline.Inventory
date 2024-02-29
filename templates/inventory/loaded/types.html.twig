@@ -3,10 +3,12 @@
 {% block title %}Загруженные категории{% endblock %}
 
 {% block content %}
-    <div class="d-flex flex-wrap w-75 p-5">
+    <div class="loaded-categories">
     {% for i in types %}
-        <div class="w-100">
-            <a class="text-decoration-none text-black" href="{{ path('admin_loaded_types_serials', {"type" : i.type}) }}"><h1 class="fl_font-family-primary" style="font-size: 24px;">{{ i.type }}</h1></a>
+        <div class="item-container">
+            <a class="link fl_font-family-primary" href="{{ path('admin_loaded_types_serials', {"type" : i.type}) }}">
+                {{ i.type }}
+            </a>
         </div>
     {% endfor %}
     </div>

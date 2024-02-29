@@ -174,10 +174,9 @@ class PersistCommand extends Command
             $manager->clear();
 
         } catch (\Exception | \Throwable $e) {
-            echo "Flush error by $folder in $filename\n" . $e->getMessage() ."\n";
+            echo "Flush error by $folder in \n\t$filename\n\n" . $e->getMessage() ."\n";
             die();
         }
-
     }
 
     private function persistAttachments($serializeData, $serial, $folder, $filename)

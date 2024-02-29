@@ -32,6 +32,10 @@ class UserExtension extends AbstractExtension
             new TwigFunction('isUser', [
                 UserRuntime::class,
                 'isUser'
+            ]),
+            new TwigFunction('getUsername', [
+                UserRuntime::class,
+                'getUsername'
             ])
         ];
     }

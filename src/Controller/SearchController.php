@@ -12,10 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class SearchController extends AbstractController
 {
-
-    #[Route('/search', name: 'app_search', methods: [
-        'POST'
-    ])]
+    #[Route('/search', name: 'app_search', methods: ['POST'])]
     public function search(Request $request, ManagerRegistry $registry): JsonResponse
     {
         /** @var InventoryRepository $inventoryRepository */
@@ -30,14 +27,10 @@ class SearchController extends AbstractController
             ]);
         }
 
-        return new JsonResponse([
-            'По заданному запросу ничего не найдено.'
-        ]);
+        return new JsonResponse(['По заданному запросу ничего не найдено.']);
     }
 
-    #[Route('/search/full', name: 'app_search_full', methods: [
-        'POST'
-    ])]
+    #[Route('/search/full', name: 'app_search_full', methods: ['POST'])]
     public function searchCards(Request $request, ManagerRegistry $registry): JsonResponse
     {
         $requestData = $request->request->all();
@@ -70,8 +63,6 @@ class SearchController extends AbstractController
             ]);
         }
 
-        return new JsonResponse([
-            'По заданному запросу ничего не найдено.'
-        ]);
+        return new JsonResponse(['По заданному запросу ничего не найдено.']);
     }
 }

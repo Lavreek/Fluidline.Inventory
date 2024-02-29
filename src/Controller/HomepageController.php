@@ -10,10 +10,6 @@ class HomepageController extends AbstractController
     #[Route(['/', '/home', '/homepage'], name: 'app_home')]
     public function home(): Response
     {
-        $user = $this->getUser();
-
-        return $this->render('homepage/index.html.twig', [
-            'inventory_user' => $user
-        ]);
+        return $this->render('homepage/index.html.twig');
     }
 }

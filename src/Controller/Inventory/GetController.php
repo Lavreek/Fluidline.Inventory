@@ -7,7 +7,6 @@ use App\Repository\Inventory\InventoryRepository;
 use App\Service\ConstructorHelper;
 use App\Service\Serializer;
 use Doctrine\Persistence\ManagerRegistry;
-use Doctrine\Persistence\ObjectManager;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
