@@ -1,0 +1,3 @@
+FROM devilbox/php-fpm:8.2-slim
+
+WORKDIR /var/www/html

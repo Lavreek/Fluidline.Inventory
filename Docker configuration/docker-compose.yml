@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+
+  project-host:
+    container_name: project-host
+
+    build:
+      context: .
+      dockerfile: Dockerfile_host
+
+    networks:
+      - backend
+
+    volumes:
+      - ./fpm/:/var/www/html/
+
+    ports:
+      - "8000:80"
+      - "8443:443"
+
+  php-app:
+    container_name: php-app
+
+    build:
+      context: .
+      dockerfile: Dockerfile_php-app
+
+    networks:
+      - backend
+
+    volumes:
+      - ./fpm:/var/www/html/
+
+    ports:
+      - "9001:9000"
+
+#  project-database:
+#    container_name: database
+#
+#    build:
+#      context: .
+#      dockerfile: Dockerfile_database
+#      args:
+#        USER: ${MYSQL_USER}
+#        PASSWORD: ${MYSQL_PASSWORD}
+#        DATABASE: ${MYSQL_DATABASE}
+#        ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+#
+#    restart: always
+#
+#    networks:
+#      - backend
+#
+#    environment:
+#        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+#        MYSQL_DATABASE: ${MYSQL_DATABASE}
+#        MYSQL_USER: ${MYSQL_USER}
+#        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+#
+#    command: --wait_timeout=3600
+#
+#    ports:
+#        - "3306:3306"
+
+networks:
+  backend:
+    name: app-network
+    driver: bridge
+    external: true
