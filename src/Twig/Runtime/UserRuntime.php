@@ -2,7 +2,6 @@
 namespace App\Twig\Runtime;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Twig\Extension\RuntimeExtensionInterface;
 
 class UserRuntime extends AbstractController implements RuntimeExtensionInterface
@@ -14,10 +13,14 @@ class UserRuntime extends AbstractController implements RuntimeExtensionInterfac
 
     public function isUser() : bool
     {
-        $roles = $this->getUser()->getRoles();
+        $user = $this->getUser();
 
-        if (in_array('ROLE_USER', $roles)) {
-            return true;
+        if (!is_null($user)) {
+            $roles = $this->getUser()->getRoles();
+
+            if (in_array('ROLE_USER', $roles)) {
+                return true;
+            }
         }
 
         return false;
@@ -25,19 +28,27 @@ class UserRuntime extends AbstractController implements RuntimeExtensionInterfac
 
     public function isAdmin() : bool
     {
-        $roles = $this->getUser()->getRoles();
+        $user = $this->getUser();
 
-        if (in_array('ROLE_ADMIN', $roles)) {
-            return true;
+        if (!is_null($user)) {
+            $roles = $this->getUser()->getRoles();
+
+            if (in_array('ROLE_ADMIN', $roles)) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    public function getUsername() : string
+    public function getUsername() : string|bool
     {
         $user = $this->getUser();
 
-        return $user->getUserIdentifier();
+        if (!is_null($user)) {
+            return $user->getUserIdentifier();
+        }
+
+        return false;
     }
 }
