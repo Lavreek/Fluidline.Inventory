@@ -194,20 +194,16 @@ class FileReader extends FileHelper
 
     private function getCSVValues($file): array
     {
+        $values = $parameters = $naming = [];
+
         $row = 0;
         $delimiter = $this->getFileDelimiter($file);
 
-        if (
-            (is_string($delimiter) and empty($delimiter)) or
-            (is_bool($delimiter) and !$delimiter)
-        ) {
-            return [];
+        if ((is_string($delimiter) and empty($delimiter)) or (is_bool($delimiter) and !$delimiter)) {
+            return $values;
         }
 
-        $values = $parameters = $naming = [];
-
         while ($data = fgetcsv($file, separator: $delimiter)) {
-
             unset($data[0]);
             $data = array_values($data);
 

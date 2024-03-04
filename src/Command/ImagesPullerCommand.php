@@ -3,6 +3,8 @@ namespace App\Command;
 
 use App\Command\Helper\Directory;
 use App\Entity\Inventory\Inventory;
+use App\Entity\Inventory\InventoryAttachmenthouse;
+use App\Service\FileHelper;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -84,10 +86,7 @@ class ImagesPullerCommand extends Command
                 $manager = $this->getManager();
 
                 $inventoryRepository = $manager->getRepository(Inventory::class);
-
-                $inventory = $inventoryRepository->findOneBy([
-                    'serial' => $fileinfo['filename']
-                ]);
+                $inventory = $inventoryRepository->findOneBy(['serial' => $serial]);
 
                 if (is_null($inventory)) {
                     fclose($file);
@@ -97,11 +96,13 @@ class ImagesPullerCommand extends Command
                 echo "Executing process in serial {$fileinfo['filename']}\n";
 
                 $rowPosition = 0;
-                $entityUpdated = 0;
 
                 $header = [];
 
-                while ($row = fgetcsv($file, separator: ';')) {
+                $helper = new FileHelper();
+                $delimiter = $helper->getFileDelimiter($file);
+
+                while ($row = fgetcsv($file, separator: $delimiter)) {
                     if ($rowPosition == 0) {
                         $header = $row;
 
@@ -110,14 +111,14 @@ class ImagesPullerCommand extends Command
                             $position = array_search('code', $header);
 
                             $inventory = $inventoryRepository->findOneBy([
-                                'serial' => $fileinfo['filename'],
+                                'serial' => $serial,
                                 'code' => $row[$position]
                             ]);
                         } elseif (in_array('code_id', $header)) {
                             $position = array_search('code_id', $header);
 
                             $inventory = $inventoryRepository->findOneBy([
-                                'serial' => $fileinfo['filename'],
+                                'serial' => $serial,
                                 'code_id' => $row[$position]
                             ]);
                         } else {
@@ -128,16 +129,22 @@ class ImagesPullerCommand extends Command
                             if (in_array('image_path', $header)) {
                                 $position = array_search('image_path', $header);
 
-                                echo "Using code: ". $inventory->getCode() ."\n";
-                                $attachment = $inventory->getAttachments();
+                                if (!is_bool($position)) {
+                                    // echo "Using code: ". $inventory->getCode() ."\n";
 
-                                echo "Setting image: ". $row[$position] ."\n";
-                                $attachment->setImage($row[$position]);
+                                    /** @var InventoryAttachmenthouse $attachment */
+                                    $attachment = $inventory->getAttachments();
 
-                                $manager->persist($attachment);
+                                    if ($row[$position] !== "/assets/inventory/default.png") {
+                                        $attachment->setImage($row[$position]);
 
-                                $processed++;
-                                $entityUpdated++;
+                                        $manager->persist($attachment);
+
+                                        // echo "Setting image: ". $row[$position] ."\n";
+
+                                        $processed++;
+                                    }
+                                }
                             }
                         } else {
                             if ($rowPosition === 1 && $issetBreak) {
@@ -153,9 +160,7 @@ class ImagesPullerCommand extends Command
                 $manager->flush();
                 $manager->clear();
 
-                if ($entityUpdated > 0) {
-                    touch($locksFilepath . $serial . ".lock");
-                }
+                touch($locksFilepath . $serial . ".lock");
 
                 fclose($file);
             }

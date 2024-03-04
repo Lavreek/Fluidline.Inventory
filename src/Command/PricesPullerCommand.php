@@ -3,6 +3,7 @@ namespace App\Command;
 
 use App\Command\Helper\Directory;
 use App\Entity\Inventory\Inventory;
+use App\Service\FileHelper;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -38,7 +39,7 @@ class PricesPullerCommand extends Command
 
         $this->setMemoryLimit($input->getOption('memory-limit'));
         $forceFile = $input->getOption('file');
-        $forceSerial = $input->getOption('file');
+        $forceSerial = $input->getOption('serial');
         $moreThanOne = $input->getOption('more-than-one');
 
         $locksFilepath = $this->directories->getLocksPath() . "prices/";
@@ -50,11 +51,16 @@ class PricesPullerCommand extends Command
         $pricesFiles = $this->getFiles($pricesPath);
 
         foreach ($pricesFiles as $file) {
-            if (!empty($forceFile) && $file != $forceFile) {
+            $fileinfo = pathinfo($file);
+
+            if ($fileinfo['extension'] == "gen") {
                 continue;
             }
 
-            $fileinfo = pathinfo($file);
+            if ((!empty($forceFile) && $file != $forceFile) or !isset($fileinfo['extension'])) {
+                continue;
+            }
+
             $serial = $fileinfo['filename'];
 
             if (!empty($forceSerial) && $serial != $forceSerial) {
@@ -63,47 +69,69 @@ class PricesPullerCommand extends Command
 
             $lockFile = $locksFilepath . $serial .".lock";
 
-            if (isset($fileinfo['extension'])) {
-                if (file_exists($lockFile) or
-                    $fileinfo['extension'] == "gen"
-                ) {
-                    continue;
-                }
-
-            } else {
+            if (file_exists($lockFile)) {
                 continue;
             }
 
+            echo "PricesPuller Serial: \"$serial\"\n";
+
             $file = fopen($pricesPath . $file, 'r');
+
+            $helper = new FileHelper();
+            $delimiter = $helper->getFileDelimiter($file);
 
             if (flock($file, LOCK_EX | LOCK_NB, $would_block)) {
                 $manager = $this->getManager();
                 $inventoryRepository = $manager->getRepository(Inventory::class);
 
                 $rowPosition = 0;
-                $entityUpdated = 0;
 
-                while ($row = fgetcsv($file, separator: ';')) {
+                $positions = [];
+                $findCols = ['code', 'value', 'count', 'currency'];
+
+                while ($row = fgetcsv($file, separator: $delimiter)) {
+                    if ($rowPosition === 0) {
+                        foreach ($row as $columnIndex => $columnValue) {
+                            $columnValue = trim(
+                                str_replace("﻿", '', $columnValue), " \ \t\n\r\0\x0B\""
+                            );
+
+                            if (in_array($columnValue, $findCols)) {
+                                $positions[$columnValue] = $columnIndex;
+                            }
+                        }
+                        if (count($positions) < 4) {
+                            die("Broken file {$fileinfo['basename']}.\n");
+                        }
+                    }
+
                     if ($rowPosition > 0) {
-                        if (isset($row[0], $row[1], $row[2], $row[3])) {
-                            if (!empty($row[0]) and !empty($row[3])) { // row[1] and row[2] can be zero
+                        if (count($row) == 4) {
+                            if (
+                                !empty($row[$positions['code']]) && !empty($row[$positions['value']]) &&
+                                !empty($row[$positions['currency']])
+                            ) { // Count can be zero
+                                /** @var Inventory $inventory */
                                 $inventory = $inventoryRepository->findOneBy([
-                                    'code' => $row[0],
-                                    'serial' => $fileinfo['filename']
+                                    'code' => $row[$positions['code']],
+                                    'serial' => $serial
                                 ]);
 
                                 if (!is_null($inventory)) {
-                                    echo "Update: ". $inventory->getCode() ."\n";
+                                    // echo "Using: ". $inventory->getCode() ."\n";
                                     $price = $inventory->getPrice();
 
-                                    $price->setValue($row[1]);
-                                    $price->setWarehouse($row[2]);
-                                    $price->setCurrency($row[3]);
+                                    if ($price->getValue() != $row[$positions['value']]) {
+                                        $price->setValue($row[1]);
+                                        $price->setWarehouse($row[2]);
+                                        $price->setCurrency($row[3]);
 
-                                    $manager->persist($inventory);
+                                        $manager->persist($inventory);
 
-                                    $processed++;
-                                    $entityUpdated++;
+                                        // echo "Persist: ". $inventory->getCode() ."\n";
+
+                                        $processed++;
+                                    }
                                 }
                             }
                         }
@@ -115,9 +143,9 @@ class PricesPullerCommand extends Command
                 $manager->flush();
                 $manager->clear();
 
-                if ($entityUpdated > 0) {
-                    touch($locksFilepath . $serial . ".lock");
-                }
+                echo "Flused: Serial: $serial\n";
+
+                touch($locksFilepath . $serial . ".lock");
 
                 fclose($file);
             }

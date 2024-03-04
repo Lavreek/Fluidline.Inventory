@@ -5,25 +5,15 @@ class FileHelper
 {
     public function getFileDelimiter($file) : bool|string
     {
-        $delimiter = false;
-        $tries = 0;
-
-        while (!$delimiter) {
-            $prev = stream_get_contents($file, 1);
-
-            if ($prev == '#') {
-                $delimiter = stream_get_contents($file, 1);
-            }
-
-            $tries ++;
-
-            if ($tries > 10) {
-                break;
-            }
-        }
-
+        $line = fgets($file);
         rewind($file);
 
-        return $delimiter;
+        preg_match("([\,|\;])", $line, $match);
+
+        if (isset($match[0])) {
+            return $match[0];
+        }
+
+        return false;
     }
 }
